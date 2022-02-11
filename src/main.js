@@ -77,17 +77,13 @@ function drawPlayer() {
     //console.log(collisions);
     //If there are any collisions at all
     //Think about what to actually write here.
-    if (collisions) {
-        if (!collisions[0] && !collisions[1])
-            break;
-        if (!collisions[2] && !collisions[3])
-            break;
-        px = newX; camXOffset += px - newX;
-        py = newY; camYOffset += py - newY;
-    }
+    if (!collisions[0] && !collisions[1]){
+        camXOffset += px - newX; px = newX;  console.log(1);}
+    if (!collisions[2] && !collisions[3]){
+        camYOffset += py - newY; py = newY;  console.log(2);}
 
     utilities.drawPlayer(px, py, p_ctx, flipPlayer);
-    utilities.drawRectangle(280 + camXOffset, 304 + camYOffset, 30, 30, p_ctx, "blue");
+    utilities.drawRectangle(280 + camXOffset, 330 + camYOffset, 30, 30, p_ctx, "blue");
     utilities.drawRectangle(280 + camXOffset, 800 + camYOffset, 30, 30, p_ctx, "red");
     utilities.drawRectangle(0 + camXOffset, 0 + camYOffset, 30, 1000, p_ctx, "blue");
 }
@@ -150,6 +146,7 @@ function isColliding(newX, newY) {
             p_ctx.fillStyle = "black";
             let pixels = canvasData.data;
             if (checkDataForCollision(pixels)) collisions[i] = true;
+            else collisions[i]=false;
         }
     }
 
