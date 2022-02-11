@@ -1,0 +1,51 @@
+body{
+    padding:0;
+    margin:auto;
+    width:640px;
+}
+
+h1{
+    text-align: center;
+    font-family: 'Raleway', sans-serif;
+}
+
+#canvas_player{
+    z-index: 2;
+    position: absolute;
+}
+
+#canvas_walkers{
+    z-index: 1; 
+    position: absolute;
+    border: 0.5rem outset rgba(131, 220, 250, 0.7);
+}
+
+#canvas_bg{
+    z-index: 0; 
+    border: 0.5rem outset lightpink;
+}
+
+button{
+    font-family: 'Roboto', sans-serif;
+    font-size: 1.5em;
+    font-weight: 700;
+    display:block;
+    background-color:#11ee44;
+    margin: auto;
+    margin-top: 10px;
+}
+
+button:hover{
+    background-color:#0a9e2d;
+    border:3px solid;
+}
+
+p{
+    display:block;
+    text-align: center;
+    font-family: 'Roboto', sans-serif;
+}
+
+footer{
+    margin-top: 40px;
+}
