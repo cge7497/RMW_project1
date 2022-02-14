@@ -15,7 +15,7 @@ let walker_counter = 0;
 let bg_dir_rad = 0, bg_dir_rad_Inc = 0;
 let bg_color = "white", bg_color_rgb = [255, 255, 255], should_change_bg_color = false;
 const WIDTH = 5;
-const BG_DIR_MULTIPLIER = 20;
+const BG_DIR_MULTIPLIER = 1;
 let camXOffset = 0, camYOffset = 0;
     //left, right, top down.
     const xCollOffsets = [-5, 5, -1, -1];
