@@ -1,0 +1,27 @@
+{
+  "name": "rmw_project1",
+  "version": "1.0.0",
+  "description": "A multiplayer game-like experience built with Node.js and HTML Canvas",
+  "main": "./src/server.js",
+  "scripts": {
+    "start": "node ./src/server.js",
+    "pretest": "eslint ./src --fix",
+    "test": "echo \"Tests complete \"",
+    "nodemon": "nodemon -e js,css,html,mjs,json --watch ./src --watch ./client ./src/server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cge7497/RMW_project1.git"
+  },
+  "author": "Christian Eliopoulos",
+  "license": "UNLICENSED",
+  "bugs": {
+    "url": "https://github.com/cge7497/RMW_project1/issues"
+  },
+  "homepage": "https://github.com/cge7497/RMW_project1#readme",
+  "devDependencies": {
+    "eslint": "^8.9.0",
+    "eslint-config-airbnb": "^19.0.4",
+    "eslint-plugin-import": "^2.25.4"
+  }
+}

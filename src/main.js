@@ -17,6 +17,9 @@ let bg_color = "white", bg_color_rgb = [255, 255, 255], should_change_bg_color =
 const WIDTH = 5;
 const BG_DIR_MULTIPLIER = 20;
 let camXOffset = 0, camYOffset = 0;
+    //left, right, top down.
+    const xCollOffsets = [-5, 5, -1, -1];
+    const yCollOffsets = [0, 0, -8, 8];
 
 //I created the sounds with SFXR (http://sfxr.me/)
 function init() {
@@ -54,8 +57,6 @@ function init() {
     }
     drawBG();
 
-    w_ctx.fillStyle = "blue";
-    utilities.drawRectangle(280, 304, 30, 30, p_ctx, "blue");
     w_ctx.fillStyle = "black";
     px = py = 300;
 
@@ -64,26 +65,37 @@ function init() {
     setInterval(drawSquareWalkers, 1000 / 5);
     setInterval(drawBG, 1000 / 15);
 }
+
 function drawPlayer() {
     //console.log(`${camXOffset} y: ${camYOffset}`);
+    let xDif = 0, yDif = 0;
+    if (keysPressed[65]) xDif = xSpeed;
+    if (keysPressed[68]) xDif = -xSpeed;
 
-    var newX = px, newY = py;
-    if (keysPressed[65]) newX -= xSpeed;
-    if (keysPressed[68]) newX += xSpeed;
+    yDif = -ySpeed;
 
-    newY += ySpeed;
+    let collisions = isColliding(px + xDif, py + ySpeed);
 
-    let collisions = isColliding(newX, newY);
-    //console.log(collisions);
-    //If there are any collisions at all
-    //Think about what to actually write here.
-    if (!collisions[0] && !collisions[1]){
-        camXOffset += px - newX; px = newX;  console.log(1);}
-    if (!collisions[2] && !collisions[3]){
-        camYOffset += py - newY; py = newY;  console.log(2);}
+    if (collisions.length !== 0) {
+        //console.log(collisions);
+        if (collisions[0] || collisions[1]) {
+            xDif=0; collisions = isColliding(px, py + ySpeed);
+        }
+        if (collisions[2] || collisions[3]) {
+            yDif=0;
+        }
+    }
+    camXOffset += xDif;
+    camYOffset += yDif;
+    console.log(`px: ${px}, py: ${py}`);
 
     utilities.drawPlayer(px, py, p_ctx, flipPlayer);
     utilities.drawRectangle(280 + camXOffset, 330 + camYOffset, 30, 30, p_ctx, "blue");
+    p_ctx.fillRect(px + xCollOffsets[0], py + yCollOffsets[0], 1, 1);
+    p_ctx.fillRect(px + xCollOffsets[1], py + yCollOffsets[1], 1, 1);
+    p_ctx.fillRect(px + xCollOffsets[2], py + yCollOffsets[2], 1, 1);
+    p_ctx.fillRect(px + xCollOffsets[3], py + yCollOffsets[3], 1, 1);
+
     utilities.drawRectangle(280 + camXOffset, 800 + camYOffset, 30, 30, p_ctx, "red");
     utilities.drawRectangle(0 + camXOffset, 0 + camYOffset, 30, 1000, p_ctx, "blue");
 }
@@ -100,8 +112,7 @@ function drawSquareWalkers() {
     sq_walkers.forEach(function (walker) {
         if (walker.life <= 0) sq_walkers.splice(sq_walkers.indexOf(walker));
         utilities.drawNewWalkerSquare(walker, w_ctx);
-    }
-    )
+    })
 }
 
 
@@ -111,7 +122,7 @@ function drawBG() {
         bg_color_rgb = utilities.fadeBGColorToDarkBlue(bg_color_rgb);
         bg_color = "rgb(" + bg_color_rgb[0] + "," + bg_color_rgb[1] + "," + bg_color_rgb[2] + ")";
     }
-    utilities.drawRectangle(0, 0, canvasWidth, canvasHeight, bg_ctx, bg_color);
+    utilities.drawRectangle(0, 0, canvasWidth, canvasHeight, bg_ctx, bg_color, true);
     bg_dir_rad += bg_dir_rad_Inc;
     bgRects.forEach(function (rect) {
         //bg_dir_rad is 0 at the start and changes value when the green diamond is collected.
@@ -128,15 +139,12 @@ function drawBG() {
         if (rect.y > canvasHeight + 20) { rect.y = -20 }
         else if (rect.y < -20) { rect.y = canvasHeight + 20 }
 
-        utilities.drawRectangle(rect.x, rect.y, rect.width, rect.height, bg_ctx, rect.color)
+        utilities.drawRectangle(rect.x, rect.y, rect.width, rect.height, bg_ctx, rect.color, true)
     }
     )
 }
 
 function isColliding(newX, newY) {
-    //left, right, top down.
-    const xCollOffsets = [-5, 0, -8, -8];
-    const yCollOffsets = [-14, -14, -15, -1];
     let canvasData; let collisions = [];
 
     for (let i = 0; i < 4; i++) {
@@ -146,7 +154,6 @@ function isColliding(newX, newY) {
             p_ctx.fillStyle = "black";
             let pixels = canvasData.data;
             if (checkDataForCollision(pixels)) collisions[i] = true;
-            else collisions[i]=false;
         }
     }
 
@@ -157,27 +164,9 @@ function checkDataForCollision(pixels) {
     for (var i = 0, l = pixels.length; i < l; i += 4) {
         //if the pixel on this canvas has a B value greater than 0.
         if (pixels[i + 2] > 0) { return true; }
-        if (pixels[i + 1] > 100) { greenCollect(); return true; }
+        //if (pixels[i + 1] > 100) { greenCollect(); return true; }
     }
     return false;
-}
-
-//Called when the green diamond is collected.
-function greenCollect() {
-    //This value affects bg_dir_rad in drawWalkers.
-    //It not being 0 will make the clouds' horizontal and vertical speed change.
-    bg_dir_rad_Inc = 0.01;
-    g_get_audio.play();
-
-    //Once the green diamond is collected, start changing the background color.
-    should_change_bg_color = true;
-
-    //remove the walkers so they are no longer updated.
-    sq_walkers = [];
-    arc_walkers = [];
-
-    //clear the walkers that have already been drawn.
-    w_ctx.clearRect(0, 0, canvasWidth, canvasHeight);
 }
 
 function mouseClick(e) {
