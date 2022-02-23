@@ -4,8 +4,9 @@ import * as classes from "./classes.js"
 let w_ctx, p_ctx, bg_ctx;
 let sq_walkers = [], arc_walkers = [];
 let bgRects = [];
-let px, py;
-let xSpeed = 2, ySpeed = 4;
+const player = {x: 300, y:300, width: 8, height: 8};
+
+let xSpeed = 1, ySpeed = 2;
 let flipPlayer = false;
 let keysPressed = [];
 let canvasWidth, canvasHeight;
@@ -16,10 +17,7 @@ let bg_dir_rad = 0, bg_dir_rad_Inc = 0;
 let bg_color = "white", bg_color_rgb = [255, 255, 255], should_change_bg_color = false;
 const WIDTH = 5;
 const BG_DIR_MULTIPLIER = 1;
-let camXOffset = 0, camYOffset = 0;
-    //left, right, top down.
-    const xCollOffsets = [-5, 5, -1, -1];
-    const yCollOffsets = [0, 0, -8, 8];
+let camXOffset = 0, camYOffset = 0
 
 //I created the sounds with SFXR (http://sfxr.me/)
 function init() {
@@ -58,60 +56,57 @@ function init() {
     drawBG();
 
     w_ctx.fillStyle = "black";
-    px = py = 300;
+    player.x = player.y = 300;
 
-    setInterval(drawPlayer, 1000 / 60);
-    setInterval(drawArcWalkers, 1000 / 30);
-    setInterval(drawSquareWalkers, 1000 / 5);
+    setInterval(update, 1000 / 30);
     setInterval(drawBG, 1000 / 15);
 }
 
-function drawPlayer() {
-    //console.log(`${camXOffset} y: ${camYOffset}`);
+function update(){
+    updatePlayer();
+    utilities.drawPlayer(player.x + camXOffset, player.y + camYOffset, p_ctx, flipPlayer);
+    utilities.drawDebugPlayer(player, p_ctx);
+    drawLevel();
+}
+
+function updatePlayer() {
     let xDif = 0, yDif = 0;
-    if (keysPressed[65]) xDif = xSpeed;
-    if (keysPressed[68]) xDif = -xSpeed;
+    if (keysPressed[65]) xDif = -xSpeed;
+    if (keysPressed[68]) xDif = xSpeed;
 
-    yDif = -ySpeed;
+    yDif = ySpeed;
+    // I should use variable for deep copy. Right now, it still references the variable value.
+    // This is what led to it being affecting two times in a row before.
+    //Gotta figure out deep and shallow copy stuff.
+    let tempPlayer = JSON.parse(JSON.stringify(player));
+    tempPlayer.x +=xDif; tempPlayer.y+=yDif;
+    tempPlayer.oldX = player.x; tempPlayer.oldY = player.y;
 
-    let collisions = isColliding(px + xDif, py + ySpeed);
-
-    if (collisions.length !== 0) {
-        //console.log(collisions);
-        if (collisions[0] || collisions[1]) {
-            xDif=0; collisions = isColliding(px, py + ySpeed);
-        }
-        if (collisions[2] || collisions[3]) {
-            yDif=0;
-        }
+    let colls = CollisionsWithLevel(tempPlayer); //returns a bool if not colliding, otherwise returns an array of collisions.
+    if (colls.length==0){
+        player.x +=xDif; player.y+=yDif;
+        console.log(`CamX: ${camXOffset}, Camy: ${camYOffset}`);
+        console.log(`PlayerX: ${player.x}, PlayerYa : ${player.y }`);
+        camXOffset -= xDif;
+        camYOffset -= yDif;
     }
-    camXOffset += xDif;
-    camYOffset += yDif;
-    console.log(`px: ${px}, py: ${py}`);
+    else {
+        //Figure out which way they're colliding.
+        //I followed this post: https://gamedev.stackexchange.com/questions/13774/how-do-i-detect-the-direction-of-2d-rectangular-object-collisions
+        colls.forEach((r) => {
+            if (collidedFromBottom(tempPlayer, r) || collidedFromTop(tempPlayer, r)) tempPlayer.y -=yDif;
+            if (collidedFromLeft(tempPlayer, r) || collidedFromRight(tempPlayer, r)) tempPlayer.x -= xDif;
+        });
+        console.log(colls);
+        player.x = tempPlayer.x;
+        player.y = tempPlayer.y;
+    }
 
-    utilities.drawPlayer(px, py, p_ctx, flipPlayer);
-    utilities.drawRectangle(280 + camXOffset, 330 + camYOffset, 30, 30, p_ctx, "blue");
-    p_ctx.fillRect(px + xCollOffsets[0], py + yCollOffsets[0], 1, 1);
-    p_ctx.fillRect(px + xCollOffsets[1], py + yCollOffsets[1], 1, 1);
-    p_ctx.fillRect(px + xCollOffsets[2], py + yCollOffsets[2], 1, 1);
-    p_ctx.fillRect(px + xCollOffsets[3], py + yCollOffsets[3], 1, 1);
-
-    utilities.drawRectangle(280 + camXOffset, 800 + camYOffset, 30, 30, p_ctx, "red");
-    utilities.drawRectangle(0 + camXOffset, 0 + camYOffset, 30, 1000, p_ctx, "blue");
 }
 
-function drawArcWalkers() {
-    arc_walkers.forEach(function (walker) {
-        if (walker.life <= 0) arc_walkers.splice(arc_walkers.indexOf(walker));
-        utilities.drawNewWalkerArc(walker, w_ctx);
-    }
-    )
-}
-
-function drawSquareWalkers() {
-    sq_walkers.forEach(function (walker) {
-        if (walker.life <= 0) sq_walkers.splice(sq_walkers.indexOf(walker));
-        utilities.drawNewWalkerSquare(walker, w_ctx);
+function drawLevel() {
+    classes.rects.forEach((r) => {
+        utilities.drawRectangle(r.x + camXOffset, r.y + camYOffset, r.width, r.height, p_ctx, r.color, true);
     })
 }
 
@@ -144,29 +139,15 @@ function drawBG() {
     )
 }
 
-function isColliding(newX, newY) {
-    let canvasData; let collisions = [];
-
-    for (let i = 0; i < 4; i++) {
-        //checking collision on the top.
-        canvasData = p_ctx.getImageData(newX + xCollOffsets[i], newY + yCollOffsets[i], 7, 1);
-        if (canvasData) {
-            p_ctx.fillStyle = "black";
-            let pixels = canvasData.data;
-            if (checkDataForCollision(pixels)) collisions[i] = true;
-        }
-    }
-
-    return collisions;
-}
-
-function checkDataForCollision(pixels) {
-    for (var i = 0, l = pixels.length; i < l; i += 4) {
-        //if the pixel on this canvas has a B value greater than 0.
-        if (pixels[i + 2] > 0) { return true; }
-        //if (pixels[i + 1] > 100) { greenCollect(); return true; }
-    }
-    return false;
+function CollisionsWithLevel(obj) {
+    const coll_rects = [];
+    classes.rects.forEach((r) => {
+        if (obj.x > r.x + r.width && obj.x + obj.width < r.x
+            && obj.y < r.y + r.height && obj.y + obj.height > r.y) { 
+                coll_rects.push(r);
+            }
+    })
+    return coll_rects;
 }
 
 function mouseClick(e) {
@@ -203,7 +184,31 @@ function mouseClick(e) {
         arc_audio.play();
     }
     walker_counter += 1;
-    //console.log(color);
+}
+
+//I followed this post for advice on the following code. https://gamedev.stackexchange.com/questions/13774/how-do-i-detect-the-direction-of-2d-rectangular-object-collisions
+function collidedFromLeft(tempPlayer, r)
+{
+    return (tempPlayer.oldX + tempPlayer.width) < r.x && // was not colliding
+           (tempPlayer.x + tempPlayer.width) >= r.x;
+}
+
+function collidedFromRight(tempPlayer, r)
+{
+    return tempPlayer.oldX >= (r.x + r.width) && // was not colliding
+           tempPlayer.x < (r.x + r.width);
+}
+
+function collidedFromTop(tempPlayer, r)
+{
+    return (tempPlayer.oldY + tempPlayer.height) < r.y && // was not colliding
+           (tempPlayer.y + tempPlayer.height) >= r.y;
+}
+
+function collidedFromBottom(tempPlayer, r)
+{
+    return tempPlayer.oldY >= (r.y + r.height) && // was not colliding
+           tempPlayer.y < (r.y + r.height);
 }
 
 function keyDown(e) {

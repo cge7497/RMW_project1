@@ -21,6 +21,7 @@ class ArcWalker extends Walker {
     this.radius = 0;
   }
 }
+
 class bgRect {
   constructor(x, y, width, height, color) {
     this.x = x;
@@ -33,4 +34,9 @@ class bgRect {
   }
 }
 
-export { Walker, ArcWalker, bgRect };
+const rects = [
+  {x: 280, y: 800, width: 31, height: 30, color: 'red'},
+  {x: 0, y: 0, width: 30, height: 1000, color: 'blue'},
+];
+
+export { Walker, ArcWalker, bgRect, rects };
