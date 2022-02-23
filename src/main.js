@@ -4,6 +4,8 @@ import * as classes from "./classes.js"
 let w_ctx, p_ctx, bg_ctx;
 let sq_walkers = [], arc_walkers = [];
 let bgRects = [];
+const player = {x: 0, y:0, width: 0, height: 0};
+
 let px, py;
 let xSpeed = 2, ySpeed = 4;
 let flipPlayer = false;
@@ -17,9 +19,9 @@ let bg_color = "white", bg_color_rgb = [255, 255, 255], should_change_bg_color =
 const WIDTH = 5;
 const BG_DIR_MULTIPLIER = 1;
 let camXOffset = 0, camYOffset = 0;
-    //left, right, top down.
-    const xCollOffsets = [-5, 5, -1, -1];
-    const yCollOffsets = [0, 0, -8, 8];
+//left, right, top, down.
+const xCollOffsets = [-5, 5, -1, -1];
+const yCollOffsets = [0, 0, -8, 5];
 
 //I created the sounds with SFXR (http://sfxr.me/)
 function init() {
@@ -58,60 +60,42 @@ function init() {
     drawBG();
 
     w_ctx.fillStyle = "black";
-    px = py = 300;
+    player.x = player.y = 300;
 
-    setInterval(drawPlayer, 1000 / 60);
-    setInterval(drawArcWalkers, 1000 / 30);
-    setInterval(drawSquareWalkers, 1000 / 5);
+    setInterval(draw, 1000 / 60);
     setInterval(drawBG, 1000 / 15);
 }
 
+function draw(){
+    drawPlayer();
+    drawLevel();
+}
+
 function drawPlayer() {
-    //console.log(`${camXOffset} y: ${camYOffset}`);
     let xDif = 0, yDif = 0;
     if (keysPressed[65]) xDif = xSpeed;
     if (keysPressed[68]) xDif = -xSpeed;
 
     yDif = -ySpeed;
 
-    let collisions = isColliding(px + xDif, py + ySpeed);
+    let tempPlayer = player;
+    tempPlayer.x +=xDif; tempPlayer.y+=yDif;
 
-    if (collisions.length !== 0) {
-        //console.log(collisions);
-        if (collisions[0] || collisions[1]) {
-            xDif=0; collisions = isColliding(px, py + ySpeed);
-        }
-        if (collisions[2] || collisions[3]) {
-            yDif=0;
-        }
+    let coll = isCollidingWithLevel(tempPlayer);
+    if (!coll){
+        player.x +=xDif; player.y+=yDif;
+        camXOffset += xDif;
+        camYOffset += yDif;
     }
-    camXOffset += xDif;
-    camYOffset += yDif;
-    console.log(`px: ${px}, py: ${py}`);
+    console.log(coll);
 
-    utilities.drawPlayer(px, py, p_ctx, flipPlayer);
-    utilities.drawRectangle(280 + camXOffset, 330 + camYOffset, 30, 30, p_ctx, "blue");
-    p_ctx.fillRect(px + xCollOffsets[0], py + yCollOffsets[0], 1, 1);
-    p_ctx.fillRect(px + xCollOffsets[1], py + yCollOffsets[1], 1, 1);
-    p_ctx.fillRect(px + xCollOffsets[2], py + yCollOffsets[2], 1, 1);
-    p_ctx.fillRect(px + xCollOffsets[3], py + yCollOffsets[3], 1, 1);
-
-    utilities.drawRectangle(280 + camXOffset, 800 + camYOffset, 30, 30, p_ctx, "red");
-    utilities.drawRectangle(0 + camXOffset, 0 + camYOffset, 30, 1000, p_ctx, "blue");
+    utilities.drawPlayer(300, 300, p_ctx, flipPlayer);
+    utilities.drawDebugPlayer(player, p_ctx);
 }
 
-function drawArcWalkers() {
-    arc_walkers.forEach(function (walker) {
-        if (walker.life <= 0) arc_walkers.splice(arc_walkers.indexOf(walker));
-        utilities.drawNewWalkerArc(walker, w_ctx);
-    }
-    )
-}
-
-function drawSquareWalkers() {
-    sq_walkers.forEach(function (walker) {
-        if (walker.life <= 0) sq_walkers.splice(sq_walkers.indexOf(walker));
-        utilities.drawNewWalkerSquare(walker, w_ctx);
+function drawLevel() {
+    classes.rects.forEach((r) => {
+        utilities.drawRectangle(r.x + camXOffset, r.y + camYOffset, r.width, r.height, p_ctx, r.color);
     })
 }
 
@@ -144,29 +128,13 @@ function drawBG() {
     )
 }
 
-function isColliding(newX, newY) {
-    let canvasData; let collisions = [];
-
-    for (let i = 0; i < 4; i++) {
-        //checking collision on the top.
-        canvasData = p_ctx.getImageData(newX + xCollOffsets[i], newY + yCollOffsets[i], 7, 1);
-        if (canvasData) {
-            p_ctx.fillStyle = "black";
-            let pixels = canvasData.data;
-            if (checkDataForCollision(pixels)) collisions[i] = true;
-        }
-    }
-
-    return collisions;
-}
-
-function checkDataForCollision(pixels) {
-    for (var i = 0, l = pixels.length; i < l; i += 4) {
-        //if the pixel on this canvas has a B value greater than 0.
-        if (pixels[i + 2] > 0) { return true; }
-        //if (pixels[i + 1] > 100) { greenCollect(); return true; }
-    }
-    return false;
+function isCollidingWithLevel(obj) {
+    let colliding = false;
+    classes.rects.forEach((r) => {
+        if (obj.x > r.x + r.width && obj.x + obj.width > r.x
+            && obj.y < r.y + r.height && obj.y + obj.height > r.y) { colliding = true;}
+    })
+    return colliding;
 }
 
 function mouseClick(e) {
@@ -203,7 +171,6 @@ function mouseClick(e) {
         arc_audio.play();
     }
     walker_counter += 1;
-    //console.log(color);
 }
 
 function keyDown(e) {
