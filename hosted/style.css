@@ -9,6 +9,17 @@ h1{
     font-family: 'Raleway', sans-serif;
 }
 
+#createBody {
+    text-align: center;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+#createBody, input{
+    margin-right:20px;
+}
+
+
 #canvas_player{
     z-index: 2;
     position: absolute;

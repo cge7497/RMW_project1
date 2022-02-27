@@ -4,7 +4,7 @@ import * as classes from "./classes.js"
 let w_ctx, p_ctx, bg_ctx;
 let sq_walkers = [], arc_walkers = [];
 let bgRects = [];
-const player = {x: 300, y:300, width: 8, height: 8};
+const player = {x: 300, y:300, width: 8, height: 8, newX: 300, newY: 300};
 
 let xSpeed = 1, ySpeed = 2;
 let flipPlayer = false;
@@ -58,14 +58,14 @@ function init() {
     w_ctx.fillStyle = "black";
     player.x = player.y = 300;
 
-    setInterval(update, 1000 / 30);
+    setInterval(update, 1000 / 60);
     setInterval(drawBG, 1000 / 15);
 }
 
 function update(){
     updatePlayer();
     utilities.drawPlayer(player.x + camXOffset, player.y + camYOffset, p_ctx, flipPlayer);
-    utilities.drawDebugPlayer(player, p_ctx);
+    //utilities.drawDebugPlayer(player, p_ctx);
     drawLevel();
 }
 
@@ -78,15 +78,14 @@ function updatePlayer() {
     // I should use variable for deep copy. Right now, it still references the variable value.
     // This is what led to it being affecting two times in a row before.
     //Gotta figure out deep and shallow copy stuff.
-    let tempPlayer = JSON.parse(JSON.stringify(player));
-    tempPlayer.x +=xDif; tempPlayer.y+=yDif;
-    tempPlayer.oldX = player.x; tempPlayer.oldY = player.y;
+    player.newX = player.x + xDif;
+    player.newY = player.y + yDif;
 
-    let colls = CollisionsWithLevel(tempPlayer); //returns a bool if not colliding, otherwise returns an array of collisions.
+    let colls = CollisionsWithLevel(player); //returns a bool if not colliding, otherwise returns an array of collisions.
     if (colls.length==0){
         player.x +=xDif; player.y+=yDif;
-        console.log(`CamX: ${camXOffset}, Camy: ${camYOffset}`);
-        console.log(`PlayerX: ${player.x}, PlayerYa : ${player.y }`);
+        //console.log(`CamX: ${camXOffset}, Camy: ${camYOffset}`);
+        //console.log(`PlayerX: ${player.x}, PlayerYa : ${player.y }`);
         camXOffset -= xDif;
         camYOffset -= yDif;
     }
@@ -94,12 +93,13 @@ function updatePlayer() {
         //Figure out which way they're colliding.
         //I followed this post: https://gamedev.stackexchange.com/questions/13774/how-do-i-detect-the-direction-of-2d-rectangular-object-collisions
         colls.forEach((r) => {
-            if (collidedFromBottom(tempPlayer, r) || collidedFromTop(tempPlayer, r)) tempPlayer.y -=yDif;
-            if (collidedFromLeft(tempPlayer, r) || collidedFromRight(tempPlayer, r)) tempPlayer.x -= xDif;
+            if (collidedFromBottom(player, r) || collidedFromTop(player, r)) player.newY -=yDif;
+            if (collidedFromLeft(player, r) || collidedFromRight(player, r)) player.newX -= xDif;
         });
-        console.log(colls);
-        player.x = tempPlayer.x;
-        player.y = tempPlayer.y;
+        camXOffset += player.x - player.newX;
+        camYOffset += player.y - player.newY;
+        player.x = player.newX;
+        player.y = player.newY;
     }
 
 }
@@ -139,11 +139,12 @@ function drawBG() {
     )
 }
 
-function CollisionsWithLevel(obj) {
+function CollisionsWithLevel(p) {
+    
     const coll_rects = [];
     classes.rects.forEach((r) => {
-        if (obj.x > r.x + r.width && obj.x + obj.width < r.x
-            && obj.y < r.y + r.height && obj.y + obj.height > r.y) { 
+        if (p.newX < r.x + r.width && p.newX + p.width > r.x
+            && p.newY < r.y + r.height && p.newY + p.height > r.y) { 
                 coll_rects.push(r);
             }
     })
@@ -187,28 +188,28 @@ function mouseClick(e) {
 }
 
 //I followed this post for advice on the following code. https://gamedev.stackexchange.com/questions/13774/how-do-i-detect-the-direction-of-2d-rectangular-object-collisions
-function collidedFromLeft(tempPlayer, r)
+function collidedFromLeft(p, r)
 {
-    return (tempPlayer.oldX + tempPlayer.width) < r.x && // was not colliding
-           (tempPlayer.x + tempPlayer.width) >= r.x;
+    return (p.x + p.width) < r.x && // was not colliding
+           (p.newX + p.width) >= r.x;
 }
 
-function collidedFromRight(tempPlayer, r)
+function collidedFromRight(p, r)
 {
-    return tempPlayer.oldX >= (r.x + r.width) && // was not colliding
-           tempPlayer.x < (r.x + r.width);
+    return p.x >= (r.x + r.width) && // was not colliding
+           p.newX < (r.x + r.width);
 }
 
-function collidedFromTop(tempPlayer, r)
+function collidedFromTop(p, r)
 {
-    return (tempPlayer.oldY + tempPlayer.height) < r.y && // was not colliding
-           (tempPlayer.y + tempPlayer.height) >= r.y;
+    return (p.y + p.height) < r.y && // was not colliding
+           (p.newY + p.height) >= r.y;
 }
 
-function collidedFromBottom(tempPlayer, r)
+function collidedFromBottom(p, r)
 {
-    return tempPlayer.oldY >= (r.y + r.height) && // was not colliding
-           tempPlayer.y < (r.y + r.height);
+    return p.y >= (r.y + r.height) && // was not colliding
+           p.newY < (r.y + r.height);
 }
 
 function keyDown(e) {
