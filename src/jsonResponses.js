@@ -56,8 +56,18 @@ const addUser = (request, response, body) => {
   return respondJSONMeta(request, response, responseCode);
 };
 
+const notFound = (request, response) => {
+  const responseJSON = {
+    message: 'The page you are looking for was not found.',
+    id: 'notFound',
+  };
+
+  respondJSON(request, response, 404, responseJSON);
+};
+
 //public exports
 module.exports = {
   getUsers,
   addUser,
+  notFound
 };

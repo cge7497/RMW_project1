@@ -7,7 +7,9 @@
     "start": "node ./src/server.js",
     "pretest": "eslint ./src --fix",
     "test": "echo \"Tests complete \"",
-    "nodemon": "nodemon -e js,css,html,mjs,json --watch ./src --watch ./client ./src/server.js"
+    "nodemon": "nodemon -e js,css,html,mjs,json --watch ./src --watch ./client ./src/server.js",
+    "watchBundle": "webpack",
+    "heroku-postbuild": "webpack --config heroku.config.js"
   },
   "repository": {
     "type": "git",

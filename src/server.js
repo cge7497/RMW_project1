@@ -2,8 +2,8 @@ const http = require('http');
 const url = require('url');
 const query = require('querystring');
 
-const htmlHandler = require('./htmlHandler.js');
-const responseHandler = require('./responseHandler.js');
+const htmlHandler = require('./htmlResponses.js');
+const jsonHandler = require('./jsonResponses.js');
 
 const port = process.env.PORT || process.env.NODE_PORT || 3000;
 
@@ -11,17 +11,16 @@ const urlStruct = {
   GET: {
     '/': htmlHandler.getIndex,
     '/style.css': htmlHandler.getCSS,
-    '/getUsers': responseHandler.getUsers,
-    '/notReal': responseHandler.getNotReal,
-    notFound: responseHandler.notFound,
+    '/bundle.js': htmlHandler.getBundle,
+    '/getUsers': jsonHandler.getUsers,
+    '/favicon.ico': htmlHandler.getFavicon,
+    notFound: jsonHandler.notFound,
   },
   HEAD: {
-    '/getUsers': responseHandler.getUsersMeta,
-    '/notReal': responseHandler.getNotRealMeta,
-    notFound: responseHandler.notFound,
+    notFound: jsonHandler.notFound,
   },
   POST: {
-    '/addUser': responseHandler.addUser,
+    '/addUser': jsonHandler.addUser,
   },
 };
 
