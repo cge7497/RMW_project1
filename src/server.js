@@ -13,14 +13,17 @@ const urlStruct = {
     '/style.css': htmlHandler.getCSS,
     '/bundle.js': htmlHandler.getBundle,
     '/getUsers': jsonHandler.getUsers,
+    '/getOtherMovement': jsonHandler.getOtherMovement,
     '/favicon.ico': htmlHandler.getFavicon,
     notFound: jsonHandler.notFound,
   },
   HEAD: {
+    '/getOtherMovementMeta': jsonHandler.getOtherMovementMeta,
     notFound: jsonHandler.notFound,
   },
   POST: {
     '/addUser': jsonHandler.addUser,
+    '/addMovement': jsonHandler.addMovement
   },
 };
 

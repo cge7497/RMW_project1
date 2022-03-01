@@ -6,7 +6,9 @@ import * as classes from "./classes.js"
 let w_ctx, p_ctx, bg_ctx;
 let sq_walkers = [], arc_walkers = [];
 let bgRects = [];
-const player = {x: 300, y:300, width: 8, height: 8, newX: 300, newY: 300};
+const movementThisSecond = []; let updateMovement = true;
+
+const player = {x: 300, y:300, halfWidth: 4, halfHeight: 7, newX: 300, newY: 300};
 
 let xSpeed = 2, ySpeed = 3;
 let flipPlayer = false;
@@ -22,7 +24,7 @@ const BG_DIR_MULTIPLIER = 1;
 let camXOffset = 0, camYOffset = 0
 
 //I created the sounds with SFXR (http://sfxr.me/)
-function init() {
+const init = () => {
     sq_audio = new Audio("./sounds/blue_walker.wav");
     sq_audio.volume = 0.25;
 
@@ -62,16 +64,18 @@ function init() {
 
     setInterval(update, 1000 / 60);
     setInterval(drawBG, 1000 / 15);
+    setInterval(sendMovementRequest, 1000);
+    setInterval(drawOtherPlayerMovement, 1000/30);
 }
-//
-function update(){
+
+const update = () => {
     updatePlayer();
     utilities.drawPlayer(player.x + camXOffset, player.y + camYOffset, p_ctx, flipPlayer);
     utilities.drawDebugPlayer(player, p_ctx, camXOffset, camYOffset);
     drawLevel();
 }
 
-function updatePlayer() {
+const updatePlayer = () => {
     let xDif = 0, yDif = 0;
     if (keysPressed[65]) xDif = -xSpeed;
     if (keysPressed[68]) xDif = xSpeed;
@@ -97,7 +101,7 @@ function updatePlayer() {
             if (collidedFromBottom(player, r)) {player.newY -= yDif; console.log('collided on bottom.');}
             if (collidedFromLeft(player, r)) {player.newX -= xDif; console.log('collided on left.');}
             if (collidedFromTop(player, r)) {player.newY -= yDif; console.log('collided top.');}
-            if (collidedFromRight(player, r)) {player.newX -= xDif; console.log('collided right.');}
+            if (collidedFromRight(player, r)) {player.newX -= xDif; console.log('collided on the right!');}
         });
         camXOffset += player.x - player.newX;
         camYOffset += player.y - player.newY;
@@ -107,14 +111,14 @@ function updatePlayer() {
 
 }
 
-function drawLevel() {
+const drawLevel = () => {
     classes.rects.forEach((r) => {
         utilities.drawRectangle(r.x + camXOffset, r.y + camYOffset, r.width, r.height, p_ctx, r.color, true);
     })
-}
+};
 
 
-function drawBG() {
+const drawBG = () => {
     bg_ctx.clearRect(0, 0, 640, 480);
     if (should_change_bg_color) {
         bg_color_rgb = utilities.fadeBGColorToDarkBlue(bg_color_rgb);
@@ -140,21 +144,24 @@ function drawBG() {
         utilities.drawRectangle(rect.x, rect.y, rect.width, rect.height, bg_ctx, rect.color, true)
     }
     )
-}
+};
 
-function CollisionsWithLevel(p) {
-    
+const sendMovementRequest = () => {
+
+};
+
+const CollisionsWithLevel = (p) =>{
     const coll_rects = [];
     classes.rects.forEach((r) => {
-        if ((p.newX-p.width) < r.x + r.width && p.newX + p.width > r.x
-            && (p.newY-p.height) < r.y + r.height && p.newY + p.height > r.y) { 
+        if (p.newX - p.halfWidth < r.x + r.width && p.newX + (p.halfWidth) > r.x
+            && p.newY-p.halfHeight < r.y + r.height && p.newY + p.halfHeight > r.y) { 
                 coll_rects.push(r);
             }
     })
     return coll_rects;
-}
+};
 
-function mouseClick(e) {
+const mouseClick = (e) => {
     let x, y, color, type;
     //gets where the mouse is clicked on the canvas. If it is clicked in a valid position, then it creates a walker at that spot.
     x = e.pageX - e.target.offsetLeft;
@@ -188,36 +195,34 @@ function mouseClick(e) {
         arc_audio.play();
     }
     walker_counter += 1;
-}
+};
 
-//I followed this post for advice on the following code. https://gamedev.stackexchange.com/questions/13774/how-do-i-detect-the-direction-of-2d-rectangular-object-collisions
-function collidedFromRight(p, r)
+//I followed/copied much of the following collision code from https://gamedev.stackexchange.com/questions/13774/how-do-i-detect-the-direction-of-2d-rectangular-object-collisions
+const collidedFromRight = (p, r) =>
 {
-    //console.log(p.width);
-
-    return (p.x + p.width) < r.x && // Old coordinates were not overlapping...
-           (p.newX + p.width) >= r.x; // and new ones are.
-}
-
-function collidedFromLeft(p, r)
+    return (p.x + p.halfWidth) <= r.x && // If the new coordinates were not overlapping...
+           (p.newX + p.halfWidth) >= r.x; // and the new ones are.
+};
+//testYo
+const collidedFromLeft = (p, r) =>
 {
-    return (p.x - p.width) >= (r.x + r.width) &&
-    (p.newX - p.width) < (r.x + r.width);
-}
+    return (p.x - p.halfWidth) >= (r.x + r.width) && 
+    (p.newX - p.halfWidth) < (r.x + r.width); 
+};
 
-function collidedFromBottom(p, r)
+const collidedFromBottom = (p, r) =>
 {
-    return (p.y + p.height) < r.y && 
-           (p.newY + p.height) >= r.y;
-}
+    return (p.y + p.halfHeight) < r.y && 
+           (p.newY + p.halfHeight) >= r.y;
+};
 
-function collidedFromTop(p, r)
+const collidedFromTop = (p, r) =>
 {
-    return (p.y - p.height) >= (r.y + r.height) && // was not colliding
-           (p.newY - p.height) < (r.y + r.height);
-}
+    return (p.y - p.halfHeight) >= (r.y + r.height) && // was not colliding
+           (p.newY - p.halfHeight) < (r.y + r.height);
+};
 
-function keyDown(e) {
+const keyDown = (e) => {
     switch (e.keyCode) {
         //'A' press
         case 65:
@@ -239,9 +244,9 @@ function keyDown(e) {
             keysPressed[e.keyCode] = true;
             break;
     }
-}
+};
 
-function keyUp(e) {
+const keyUp = (e) => {
     switch (e.keyCode) {
         case 65:
             keysPressed[e.keyCode] = false;
@@ -255,5 +260,6 @@ function keyUp(e) {
             keysPressed[e.keyCode] = false;
             break;
     }
-}
+};
+
 export { init };

@@ -1,22 +1,21 @@
 const players = {};
+const playerMovementThisSecond = {};
 
-//function to respond with a json object
-//takes request, response, status code and object to send
+// writes a status header and a JSON object to the response.
 const respondJSON = (request, response, status, object) => {
   response.writeHead(status, { 'Content-Type': 'application/json' });
   response.write(JSON.stringify(object));
   response.end();
 };
 
-//function to respond without json body
-//takes request, response and status code
+// writes a status header to the response.
 const respondJSONMeta = (request, response, status) => {
   response.writeHead(status, { 'Content-Type': 'application/json' });
   response.end();
 };
 
 //return user object as JSON
-const getUsers = (request, response) => {
+const getPlayers = (request, response) => {
   const responseJSON = {
     players,
   };
@@ -24,8 +23,8 @@ const getUsers = (request, response) => {
   respondJSON(request, response, 200, responseJSON);
 };
 
-//function to add a user from a POST body
-const addUser = (request, response, body) => {
+//add a user/player from the body of a POST request
+const addPlayer = (request, response, body) => {
   //default json message
   const responseJSON = {
     message: 'Name, number, and color are all required.',
@@ -38,7 +37,7 @@ const addUser = (request, response, body) => {
 
   let responseCode = 204;
 
-  if(!users[body.name]) {
+  if (!users[body.name]) {
     responseCode = 201;
     users[body.name] = {};
   }
@@ -53,8 +52,51 @@ const addUser = (request, response, body) => {
     return respondJSON(request, response, responseCode, responseJSON);
   }
 
+  //This would return if the player was updated.
   return respondJSONMeta(request, response, responseCode);
 };
+
+// How am I going to structure this?...
+// On client, record 30 frames of movement. Once every second frame. Do I record every frame, or every second?
+// Alarm to run it once every second to send for request.
+
+//adds to the global movement array for this second.
+const addMovement = (request, response, body) => {
+  const responseJSON = {
+    message: 'This endpoint requires an array of 30 JSON objects with an X, Y, and flipped variable. They were not present in the request.',
+  };
+
+  if (!body.movement || body.movement.length < 30) {
+    responseJSON.id = 'missingParams';
+    return respondJSON(request, response, 400, responseJSON);
+  }
+
+  let responseCode = 204;
+
+  if (!users[body.name]) {
+    responseCode = 201;
+    users[body.name] = {};
+  }
+
+  return respondJSONMeta(request, response, responseCode);
+};
+
+const getOtherMovement = (request, response) => {
+    const responseJSON = {
+      playerMovementThisSecond,
+    };
+    respondJSON(request, response, 200, responseJSON);
+}
+
+// Responds with status code 304 (Not Modified) if there has been 1 or less player movement stats in the last second,
+// or status 100 (Continue) if there was other player movement recently.
+const getOtherMovementMeta = (request, response) => {
+  if (playerMovementThisSecond.length <= 1){
+    respondJSONMeta(request, response, 304);
+  }
+  else respondJSONMeta(request, response, 100);
+}
+
 
 const notFound = (request, response) => {
   const responseJSON = {
@@ -67,7 +109,10 @@ const notFound = (request, response) => {
 
 //public exports
 module.exports = {
-  getUsers,
-  addUser,
-  notFound
+  getPlayers,
+  addPlayer,
+  notFound,
+  addMovement,
+  getOtherMovement,
+  getOtherMovementMeta
 };

@@ -1,6 +1,5 @@
-
 //draws the player shape, which is a combination of canvas lines and arcs.
-function drawPlayer(x, y, p_ctx, flipPlayer) {
+const drawPlayer = (x, y, p_ctx, flipPlayer) => {
   let scale = 1;
   if (flipPlayer) scale = -1;
   p_ctx.clearRect(0, 0, 640, 480);
@@ -21,7 +20,7 @@ function drawPlayer(x, y, p_ctx, flipPlayer) {
   p_ctx.restore();
 }
 
-function drawRectangle(x, y, width, height, ctx, color, fill) {
+const drawRectangle = (x, y, width, height, ctx, color, fill) => {
   ctx.save();
   ctx.beginPath();
   ctx.moveTo(x, y);
@@ -34,19 +33,15 @@ function drawRectangle(x, y, width, height, ctx, color, fill) {
   ctx.restore();
 }
 
-function getRandomColorWithinRange(r, g, b, a, rMin = 0, gMin = 0, bMin = 0, aMin = 0) {
-  return "rgba(" + (Math.random() * r + rMin) + "," + (Math.random() * g + gMin) + "," + (Math.random() * b + bMin) + "," + (Math.random() * a + aMin) + ")";
-}
-
-function fadeBGColorToDarkBlue(color_rgb) {
+const fadeBGColorToDarkBlue = (color_rgb) => {
   if (color_rgb[0] > 15) color_rgb[0] -= 0.1;
   if (color_rgb[1] > 31) color_rgb[1] -= 0.1;
   if (color_rgb[2] > 56) color_rgb[2] -= 0.1;
   return color_rgb;
 }
 
-function drawDebugPlayer(p, p_ctx, xCam, yCam){
-  p_ctx.fillRect(p.x + xCam, p.y + yCam, -p.width, -p.height, 'blue');
+const drawDebugPlayer = (p, p_ctx, xCam, yCam) => {
+  p_ctx.fillRect(p.x + xCam - p.width/2, p.y + yCam - p.height/2, p.width, p.height, 'blue');
 }
 
-export { drawPlayer, drawRectangle, getRandomColorWithinRange, fadeBGColorToDarkBlue, drawDebugPlayer }
+export { drawPlayer, drawRectangle, fadeBGColorToDarkBlue, drawDebugPlayer }
