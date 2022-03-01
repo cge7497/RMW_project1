@@ -95,13 +95,11 @@ const updatePlayer = () => {
         camYOffset -= yDif;
     }
     else {
-        //Figure out which way they're colliding.
+        //Figure out which way the collisions occurred, so the player can be moved in the correct direction.
         //I followed this post: https://gamedev.stackexchange.com/questions/13774/how-do-i-detect-the-direction-of-2d-rectangular-object-collisions
         colls.forEach((r) => {
-            if (collidedFromBottom(player, r)) {player.newY -= yDif; console.log('collided on bottom.');}
-            if (collidedFromLeft(player, r)) {player.newX -= xDif; console.log('collided on left.');}
-            if (collidedFromTop(player, r)) {player.newY -= yDif; console.log('collided top.');}
-            if (collidedFromRight(player, r)) {player.newX -= xDif; console.log('collided on the right!');}
+            if (collidedFromBottom(player, r) || collidedFromTop(player, r)) {player.newY -= yDif;}
+            if (collidedFromLeft(player, r) || collidedFromRight(player, r)) {player.newX -= xDif;}
         });
         camXOffset += player.x - player.newX;
         camYOffset += player.y - player.newY;
@@ -198,12 +196,14 @@ const mouseClick = (e) => {
 };
 
 //I followed/copied much of the following collision code from https://gamedev.stackexchange.com/questions/13774/how-do-i-detect-the-direction-of-2d-rectangular-object-collisions
+// These functions test which direction two objects (usually the player and a rectangle) collided.
+// It compares the player's old coordinates and new ones with the rectangles, to figure out which coordinate change triggered the collision.
 const collidedFromRight = (p, r) =>
 {
     return (p.x + p.halfWidth) <= r.x && // If the new coordinates were not overlapping...
            (p.newX + p.halfWidth) >= r.x; // and the new ones are.
 };
-//testYo
+
 const collidedFromLeft = (p, r) =>
 {
     return (p.x - p.halfWidth) >= (r.x + r.width) && 
@@ -221,6 +221,7 @@ const collidedFromTop = (p, r) =>
     return (p.y - p.halfHeight) >= (r.y + r.height) && // was not colliding
            (p.newY - p.halfHeight) < (r.y + r.height);
 };
+
 
 const keyDown = (e) => {
     switch (e.keyCode) {

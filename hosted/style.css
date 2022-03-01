@@ -18,17 +18,26 @@ h1{
 #createBody, input{
     margin-right:20px;
 }
+  
+#submitBtn{
+    margin-top:30px;
+    font-size: medium;
+    font-weight: bold;
+}
 
+.age{
+    display: none;
+}
 
 #canvas_player{
     z-index: 2;
     position: absolute;
+    border: 0.5rem outset rgba(131, 220, 250, 0.7);
 }
 
 #canvas_walkers{
     z-index: 1; 
     position: absolute;
-    border: 0.5rem outset rgba(131, 220, 250, 0.7);
 }
 
 #canvas_bg{
