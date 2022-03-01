@@ -17,7 +17,7 @@
     <main>
         <section id="createBody">
             <h3>Create A Player</h3>
-            <form id="playerForm" action="/addUser" method="post">
+            <form id="playerForm" action="/addPlayer" method="post">
                 <label for="name">Name: </label>
                 <input id="nameField" type="text" name="name" />
                 <label for="age" class="age">Number: </label>
@@ -25,9 +25,9 @@
                 <!-- I got this color picker code from https://www.w3schools.com/colors/colors_picker.asp !-->
                 <label for="color">Color: </label>
                 <input id="colorField" type="color" name="favcolor" name="color">
+                <br>
                 <input id="submitBtn" type="submit" value="Create (or update) Player" />
             </form>
-            <div>
                 <canvas width="640" height="480" id="canvas_player">
                     If this message is displayed, the canvas could not be loaded. This is likely because of the browser
                     you
@@ -43,9 +43,7 @@
                     you
                     are in.
                 </canvas>
-            </div>
-
-            <p>Go to /getUsers to see users.</p>
+            <p id="createResponse"></p>
         </section>
         <div>
             <button id="btn_reset">Reset</button>

@@ -27,10 +27,12 @@ const getPlayers = (request, response) => {
 const addPlayer = (request, response, body) => {
   //default json message
   const responseJSON = {
-    message: 'Name, number, and color are all required.',
+    message: 'Both name and color are required.',
   };
 
-  if (!body.name || !body.age || !body.color) {
+  console.log(`name: ${body.name} color:${body.color}`);
+  
+  if (!body.name || !body.color) {
     responseJSON.id = 'missingParams';
     return respondJSON(request, response, 400, responseJSON);
   }
@@ -44,15 +46,17 @@ const addPlayer = (request, response, body) => {
 
   //add or update fields for this user name
   users[body.name].name = body.name;
-  users[body.name].age = body.age;
+  //update the optional age value if it was sent.
+  if (body.age) users[body.name].age = body.age; 
 
+  responseJSON = users[body.name];
 
   if (responseCode === 201) {
     responseJSON.message = 'Created Successfully';
     return respondJSON(request, response, responseCode, responseJSON);
   }
 
-  //This would return if the player was updated.
+  //This returns if the player was updated.
   return respondJSONMeta(request, response, responseCode);
 };
 
