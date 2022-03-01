@@ -33,10 +33,13 @@ class bgRect {
     this.vSpeed = 0;
   }
 }
-
+//yo
 const rects = [
   {x: 280, y: 800, width: 31, height: 30, color: 'red'},
   {x: 0, y: 0, width: 30, height: 1000, color: 'blue'},
+  {x: 600, y: 0, width: 30, height: 1000, color: 'blue'},
+  {x: 0, y: 600, width: 1000, height: 30, color: 'blue'},
+  {x: 0, y: 0, width: 1000, height: 30, color: 'blue'},
 ];
 
 export { Walker, ArcWalker, bgRect, rects };

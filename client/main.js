@@ -1,12 +1,14 @@
 import * as utilities from "./utilities.js";
 import * as classes from "./classes.js"
 
+//Idea for favicon: Just the clouds with clear background. No player.
+
 let w_ctx, p_ctx, bg_ctx;
 let sq_walkers = [], arc_walkers = [];
 let bgRects = [];
 const player = {x: 300, y:300, width: 8, height: 8, newX: 300, newY: 300};
 
-let xSpeed = 1, ySpeed = 2;
+let xSpeed = 2, ySpeed = 3;
 let flipPlayer = false;
 let keysPressed = [];
 let canvasWidth, canvasHeight;
@@ -61,11 +63,11 @@ function init() {
     setInterval(update, 1000 / 60);
     setInterval(drawBG, 1000 / 15);
 }
-
+//
 function update(){
     updatePlayer();
     utilities.drawPlayer(player.x + camXOffset, player.y + camYOffset, p_ctx, flipPlayer);
-    //utilities.drawDebugPlayer(player, p_ctx);
+    utilities.drawDebugPlayer(player, p_ctx, camXOffset, camYOffset);
     drawLevel();
 }
 
@@ -74,10 +76,9 @@ function updatePlayer() {
     if (keysPressed[65]) xDif = -xSpeed;
     if (keysPressed[68]) xDif = xSpeed;
 
-    yDif = ySpeed;
-    // I should use variable for deep copy. Right now, it still references the variable value.
-    // This is what led to it being affecting two times in a row before.
-    //Gotta figure out deep and shallow copy stuff.
+    if (flipPlayer) yDif = -ySpeed;
+    else yDif = ySpeed;
+
     player.newX = player.x + xDif;
     player.newY = player.y + yDif;
 
@@ -93,8 +94,10 @@ function updatePlayer() {
         //Figure out which way they're colliding.
         //I followed this post: https://gamedev.stackexchange.com/questions/13774/how-do-i-detect-the-direction-of-2d-rectangular-object-collisions
         colls.forEach((r) => {
-            if (collidedFromBottom(player, r) || collidedFromTop(player, r)) player.newY -=yDif;
-            if (collidedFromLeft(player, r) || collidedFromRight(player, r)) player.newX -= xDif;
+            if (collidedFromBottom(player, r)) {player.newY -= yDif; console.log('collided on bottom.');}
+            if (collidedFromLeft(player, r)) {player.newX -= xDif; console.log('collided on left.');}
+            if (collidedFromTop(player, r)) {player.newY -= yDif; console.log('collided top.');}
+            if (collidedFromRight(player, r)) {player.newX -= xDif; console.log('collided right.');}
         });
         camXOffset += player.x - player.newX;
         camYOffset += player.y - player.newY;
@@ -143,8 +146,8 @@ function CollisionsWithLevel(p) {
     
     const coll_rects = [];
     classes.rects.forEach((r) => {
-        if (p.newX < r.x + r.width && p.newX + p.width > r.x
-            && p.newY < r.y + r.height && p.newY + p.height > r.y) { 
+        if ((p.newX-p.width) < r.x + r.width && p.newX + p.width > r.x
+            && (p.newY-p.height) < r.y + r.height && p.newY + p.height > r.y) { 
                 coll_rects.push(r);
             }
     })
@@ -188,28 +191,30 @@ function mouseClick(e) {
 }
 
 //I followed this post for advice on the following code. https://gamedev.stackexchange.com/questions/13774/how-do-i-detect-the-direction-of-2d-rectangular-object-collisions
-function collidedFromLeft(p, r)
-{
-    return (p.x + p.width) < r.x && // was not colliding
-           (p.newX + p.width) >= r.x;
-}
-
 function collidedFromRight(p, r)
 {
-    return p.x >= (r.x + r.width) && // was not colliding
-           p.newX < (r.x + r.width);
+    //console.log(p.width);
+
+    return (p.x + p.width) < r.x && // Old coordinates were not overlapping...
+           (p.newX + p.width) >= r.x; // and new ones are.
 }
 
-function collidedFromTop(p, r)
+function collidedFromLeft(p, r)
 {
-    return (p.y + p.height) < r.y && // was not colliding
-           (p.newY + p.height) >= r.y;
+    return (p.x - p.width) >= (r.x + r.width) &&
+    (p.newX - p.width) < (r.x + r.width);
 }
 
 function collidedFromBottom(p, r)
 {
-    return p.y >= (r.y + r.height) && // was not colliding
-           p.newY < (r.y + r.height);
+    return (p.y + p.height) < r.y && 
+           (p.newY + p.height) >= r.y;
+}
+
+function collidedFromTop(p, r)
+{
+    return (p.y - p.height) >= (r.y + r.height) && // was not colliding
+           (p.newY - p.height) < (r.y + r.height);
 }
 
 function keyDown(e) {
@@ -229,7 +234,6 @@ function keyDown(e) {
             e.preventDefault();
             //Only flip the player if space was not pressed the previous frame.
             if (!keysPressed[e.keyCode]) {
-                ySpeed = -ySpeed;
                 flipPlayer = !flipPlayer;
             }
             keysPressed[e.keyCode] = true;

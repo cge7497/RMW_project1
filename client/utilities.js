@@ -45,8 +45,8 @@ function fadeBGColorToDarkBlue(color_rgb) {
   return color_rgb;
 }
 
-function drawDebugPlayer(x, y, p_ctx){
-  p_ctx.fillRect(x, y, p.width, p.height, 'blue');
+function drawDebugPlayer(p, p_ctx, xCam, yCam){
+  p_ctx.fillRect(p.x + xCam, p.y + yCam, -p.width, -p.height, 'blue');
 }
 
 export { drawPlayer, drawRectangle, getRandomColorWithinRange, fadeBGColorToDarkBlue, drawDebugPlayer }
