@@ -15,6 +15,7 @@ const urlStruct = {
     '/getPlayers': jsonHandler.getPlayers,
     '/getOtherMovement': jsonHandler.getOtherMovement,
     '/favicon.ico': htmlHandler.getFavicon,
+    '/screwattack.png': htmlHandler.getScrewAttack,
     notFound: jsonHandler.notFound,
   },
   HEAD: {
@@ -59,7 +60,9 @@ const onRequest = (request, response) => {
   let { method } = request;
   if (!request.method) method = 'GET'; // defaults to a GET method as described in assignment
 
-  if (method === 'POST') parseBody(request, response, urlStruct[method][parsedUrl.pathname]);
+  
+  if (method === 'POST') 
+    return parseBody(request, response, urlStruct[method][parsedUrl.pathname]);
 
   if (urlStruct[method][parsedUrl.pathname]) {
     urlStruct[method][parsedUrl.pathname](request, response, queryParams);

@@ -29,8 +29,6 @@ const addPlayer = (request, response, body) => {
   const responseJSON = {
     message: 'Both name and color are required.',
   };
-
-  console.log(`name: ${body.name} color:${body.color}`);
   
   if (!body.name || !body.color) {
     responseJSON.id = 'missingParams';
@@ -39,17 +37,17 @@ const addPlayer = (request, response, body) => {
 
   let responseCode = 204;
 
-  if (!users[body.name]) {
+  if (!players[body.name]) {
     responseCode = 201;
-    users[body.name] = {};
+    players[body.name] = {};
   }
 
   //add or update fields for this user name
-  users[body.name].name = body.name;
+  players[body.name].name = body.name;
   //update the optional age value if it was sent.
-  if (body.age) users[body.name].age = body.age; 
+  if (body.age) players[body.name].age = body.age; 
 
-  responseJSON = users[body.name];
+  responseJSON.message = "Successfully created player!";
 
   if (responseCode === 201) {
     responseJSON.message = 'Created Successfully';
@@ -77,9 +75,9 @@ const addMovement = (request, response, body) => {
 
   let responseCode = 204;
 
-  if (!users[body.name]) {
+  if (!players[body.name]) {
     responseCode = 201;
-    users[body.name] = {};
+    players[body.name] = {};
   }
 
   return respondJSONMeta(request, response, responseCode);

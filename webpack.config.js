@@ -16,7 +16,7 @@ module.exports = {
        files, they will be recursively included. Meaning that if those
        files also require() other files, they too will be included.
     */
-    entry: './client/loader.js',
+    entry: './client/playerLogin.js', 
 
     /* The mode determines the type of build process and output webpack
        should use. Production will be fine 99% of the time, although if

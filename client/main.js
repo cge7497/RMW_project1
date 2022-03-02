@@ -2,16 +2,23 @@ import * as utilities from "./utilities.js";
 import * as classes from "./classes.js"
 
 //Idea for favicon: Just the clouds with clear background. No player.
+/*
+Todo list: Figure out movement transferring.
+Make items work- show the image below. Also, send a request to the server updating the player's items so next they log in their items are kept.
+This also means they should be hidden on next playthrough... but that's not really important. Make the img element visible when collected.
 
+Make sure stuff fits to rubric. Cloud ending, button that changes the color of blocks in the world. That'll be a big function for the server.
+*/
 let w_ctx, p_ctx, bg_ctx;
-let sq_walkers = [], arc_walkers = [];
-let bgRects = [];
+const sq_walkers = [], arc_walkers = [];
+const bgRects = [];
 const movementThisSecond = []; let updateMovement = true;
-
+const imgs = document.getElementById('screwattack');
+const items = [false, false, false, false]
 const player = {x: 300, y:300, halfWidth: 4, halfHeight: 7, newX: 300, newY: 300};
 
 let xSpeed = 2, ySpeed = 3;
-let flipPlayer = false;
+let flipPlayer = false; let canFlip=true;
 let keysPressed = [];
 let canvasWidth, canvasHeight;
 let canvasData;
@@ -25,6 +32,7 @@ let camXOffset = 0, camYOffset = 0
 
 //I created the sounds with SFXR (http://sfxr.me/)
 const init = () => {
+    //running init
     sq_audio = new Audio("./sounds/blue_walker.wav");
     sq_audio.volume = 0.25;
 
@@ -40,8 +48,8 @@ const init = () => {
     let p_canvas = document.querySelector("#canvas_player");
     let w_canvas = document.querySelector("#canvas_walkers");
     let bg_canvas = document.querySelector("#canvas_bg");
-    let resetBtn = document.querySelector("#btn_reset");
-    resetBtn.onclick = function () { location.reload() };
+    //let resetBtn = document.querySelector("#btn_reset");
+    //resetBtn.onclick = function () { location.reload() };
     w_ctx = w_canvas.getContext('2d');
     p_ctx = p_canvas.getContext('2d');
     bg_ctx = bg_canvas.getContext('2d');
@@ -65,7 +73,7 @@ const init = () => {
     setInterval(update, 1000 / 60);
     setInterval(drawBG, 1000 / 15);
     setInterval(sendMovementRequest, 1000);
-    setInterval(drawOtherPlayerMovement, 1000/30);
+    //setInterval(drawOtherPlayerMovement, 1000/30);
 }
 
 const update = () => {
@@ -98,7 +106,7 @@ const updatePlayer = () => {
         //Figure out which way the collisions occurred, so the player can be moved in the correct direction.
         //I followed this post: https://gamedev.stackexchange.com/questions/13774/how-do-i-detect-the-direction-of-2d-rectangular-object-collisions
         colls.forEach((r) => {
-            if (collidedFromBottom(player, r) || collidedFromTop(player, r)) {player.newY -= yDif;}
+            if (collidedFromBottom(player, r) || collidedFromTop(player, r)) {player.newY -= yDif; canFlip=true;}
             if (collidedFromLeft(player, r) || collidedFromRight(player, r)) {player.newX -= xDif;}
         });
         camXOffset += player.x - player.newX;
@@ -106,13 +114,16 @@ const updatePlayer = () => {
         player.x = player.newX;
         player.y = player.newY;
     }
-
+    CollisionsWithSpecialObjects(player);
 }
 
 const drawLevel = () => {
     classes.rects.forEach((r) => {
         utilities.drawRectangle(r.x + camXOffset, r.y + camYOffset, r.width, r.height, p_ctx, r.color, true);
-    })
+    });
+    classes.specialObjects.forEach((o) => {
+        p_ctx.drawImage(imgs, o.x + camXOffset, o.y + camYOffset);
+    });
 };
 
 
@@ -157,6 +168,16 @@ const CollisionsWithLevel = (p) =>{
             }
     })
     return coll_rects;
+};
+
+const CollisionsWithSpecialObjects = (p) =>{
+    classes.specialObjects.forEach((o) => {
+        if (p.newX - p.halfWidth < o.x + o.width && p.newX + (p.halfWidth) > o.x
+            && p.newY-p.halfHeight < o.y + o.height && p.newY + p.halfHeight > o.y) { 
+                //should give player this item... maybe it has an index, or a callback function
+                classes.specialObjects.splice(classes.specialObjects.indexOf(o), 1);
+            }
+    })
 };
 
 const mouseClick = (e) => {
@@ -238,9 +259,10 @@ const keyDown = (e) => {
         //Space is pressed.
         case 32:
             e.preventDefault();
-            //Only flip the player if space was not pressed the previous frame.
-            if (!keysPressed[e.keyCode]) {
+            //Only flip the player if space was not pressed the previous frame, and the player can flip based on landing on grounds/items.
+            if (!keysPressed[e.keyCode] && canFlip) {
                 flipPlayer = !flipPlayer;
+                canFlip=false;
             }
             keysPressed[e.keyCode] = true;
             break;
