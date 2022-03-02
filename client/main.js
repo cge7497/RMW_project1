@@ -4,8 +4,9 @@ import * as classes from "./classes.js"
 //Idea for favicon: Just the clouds with clear background. No player.
 /*
 Todo list: Figure out movement transferring.
-Make items work- show the image below. Also, send a request to the server updating the player's items so next they log in their items are kept.
-This also means they should be hidden on next playthrough... but that's not really important. Make the img element visible when collected.
+Send a request to the server when collecting an item.
+Move object declarations to classes.js, and delete unused code from it.
+Also need function with GET parameters.
 
 Make sure stuff fits to rubric. Cloud ending, button that changes the color of blocks in the world. That'll be a big function for the server.
 */

@@ -44,8 +44,11 @@ const addPlayer = (request, response, body) => {
 
   //add or update fields for this user name
   players[body.name].name = body.name;
-  //update the optional age value if it was sent.
+
+  //update the optional age and items value if it was sent.
   if (body.age) players[body.name].age = body.age; 
+
+  if(body.items) players[body.name].items = body.items; 
 
   responseJSON.message = "Successfully created player!";
 

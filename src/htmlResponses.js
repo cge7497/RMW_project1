@@ -8,6 +8,7 @@ const css = fs.readFileSync(`${__dirname}/../hosted/style.css`);
 const bundle = fs.readFileSync(`${__dirname}/../hosted/bundle.js`);
 const favicon = fs.readFileSync(`${__dirname}/../hosted/icon.gif`);
 const screwattack = fs.readFileSync(`${__dirname}/../hosted/screwattack.png`);
+const morphball = fs.readFileSync(`${__dirname}/../hosted/morphball.png`);
 
 // A simple helper function for serving up static files
 const serveFile = (response, file, contentType) => {
@@ -41,10 +42,16 @@ const getScrewAttack = (request, response) => {
   serveFile(response, screwattack, 'image/png');
 };
 
+// Serve the Screw attack icon.
+const getMorphBall = (request, response) => {
+  serveFile(response, morphball, 'image/png');
+};
+
 module.exports = {
   getIndex,
   getCSS,
   getBundle,
   getFavicon,
-  getScrewAttack
+  getScrewAttack,
+  getMorphBall
 };
