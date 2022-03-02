@@ -65,7 +65,7 @@ const addPlayer = (request, response, body) => {
 //adds to the global movement array for this second.
 const addMovement = (request, response, body) => {
   const responseJSON = {
-    message: 'This endpoint requires an array of 30 JSON objects with an X, Y, and flipped variable. They were not present in the request.',
+    message: 'This endpoint requires a player JSON object that contains 30 JSON objects with an X, Y, and flipped variable. They were not present in the request.',
   };
 
   if (!body.movement || body.movement.length < 30) {

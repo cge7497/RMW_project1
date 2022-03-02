@@ -55,7 +55,8 @@ const rects = [
 ];
 
 const specialObjects = [
-  {x: -540, y: 982, width: 16, height: 16, id: 'screwattack'}
+  {x: -540, y: 982, width: 16, height: 16, id: 'screwattack'},
+  {x: 300, y: 982, width: 16, height: 16, id: 'morphball'},
 ];
 
 export { Walker, ArcWalker, bgRect, rects, specialObjects };

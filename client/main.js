@@ -13,12 +13,21 @@ let w_ctx, p_ctx, bg_ctx;
 const sq_walkers = [], arc_walkers = [];
 const bgRects = [];
 const movementThisSecond = []; let updateMovement = true;
-const imgs = document.getElementById('screwattack');
-const items = [false, false, false, false]
-const player = {x: 300, y:300, halfWidth: 4, halfHeight: 7, newX: 300, newY: 300};
+
+const imgs = {
+    'screwattack': document.getElementById('screwattack'),
+    'morphball': document.getElementById('morphball'),
+};
+
+const items = {
+    'screwattack': { obtained: false, collected: collectScrewAttack },
+    "morphball": { obtained: false, collected: collectMorphBall },
+};
+
+const player = { x: 300, y: 300, halfWidth: 4, halfHeight: 7, newX: 300, newY: 300 };
 
 let xSpeed = 2, ySpeed = 3;
-let flipPlayer = false; let canFlip=true;
+let flipPlayer = false; let canFlip = true;
 let keysPressed = [];
 let canvasWidth, canvasHeight;
 let canvasData;
@@ -95,8 +104,8 @@ const updatePlayer = () => {
     player.newY = player.y + yDif;
 
     let colls = CollisionsWithLevel(player); //returns a bool if not colliding, otherwise returns an array of collisions.
-    if (colls.length==0){
-        player.x +=xDif; player.y+=yDif;
+    if (colls.length == 0) {
+        player.x += xDif; player.y += yDif;
         //console.log(`CamX: ${camXOffset}, Camy: ${camYOffset}`);
         //console.log(`PlayerX: ${player.x}, PlayerYa : ${player.y }`);
         camXOffset -= xDif;
@@ -106,8 +115,8 @@ const updatePlayer = () => {
         //Figure out which way the collisions occurred, so the player can be moved in the correct direction.
         //I followed this post: https://gamedev.stackexchange.com/questions/13774/how-do-i-detect-the-direction-of-2d-rectangular-object-collisions
         colls.forEach((r) => {
-            if (collidedFromBottom(player, r) || collidedFromTop(player, r)) {player.newY -= yDif; canFlip=true;}
-            if (collidedFromLeft(player, r) || collidedFromRight(player, r)) {player.newX -= xDif;}
+            if (collidedFromBottom(player, r) || collidedFromTop(player, r)) { player.newY -= yDif; canFlip = true; }
+            if (collidedFromLeft(player, r) || collidedFromRight(player, r)) { player.newX -= xDif; }
         });
         camXOffset += player.x - player.newX;
         camYOffset += player.y - player.newY;
@@ -122,7 +131,7 @@ const drawLevel = () => {
         utilities.drawRectangle(r.x + camXOffset, r.y + camYOffset, r.width, r.height, p_ctx, r.color, true);
     });
     classes.specialObjects.forEach((o) => {
-        p_ctx.drawImage(imgs, o.x + camXOffset, o.y + camYOffset);
+        p_ctx.drawImage(imgs[o.id], o.x + camXOffset, o.y + camYOffset);
     });
 };
 
@@ -159,24 +168,25 @@ const sendMovementRequest = () => {
 
 };
 
-const CollisionsWithLevel = (p) =>{
+const CollisionsWithLevel = (p) => {
     const coll_rects = [];
     classes.rects.forEach((r) => {
         if (p.newX - p.halfWidth < r.x + r.width && p.newX + (p.halfWidth) > r.x
-            && p.newY-p.halfHeight < r.y + r.height && p.newY + p.halfHeight > r.y) { 
-                coll_rects.push(r);
-            }
+            && p.newY - p.halfHeight < r.y + r.height && p.newY + p.halfHeight > r.y) {
+            coll_rects.push(r);
+        }
     })
     return coll_rects;
 };
 
-const CollisionsWithSpecialObjects = (p) =>{
+const CollisionsWithSpecialObjects = (p) => {
     classes.specialObjects.forEach((o) => {
         if (p.newX - p.halfWidth < o.x + o.width && p.newX + (p.halfWidth) > o.x
-            && p.newY-p.halfHeight < o.y + o.height && p.newY + p.halfHeight > o.y) { 
-                //should give player this item... maybe it has an index, or a callback function
-                classes.specialObjects.splice(classes.specialObjects.indexOf(o), 1);
-            }
+            && p.newY - p.halfHeight < o.y + o.height && p.newY + p.halfHeight > o.y) {
+            //should give player this item... maybe it has an index, or a callback function
+            items[o.id].collected();
+            classes.specialObjects.splice(classes.specialObjects.indexOf(o), 1);
+        }
     })
 };
 
@@ -219,30 +229,34 @@ const mouseClick = (e) => {
 //I followed/copied much of the following collision code from https://gamedev.stackexchange.com/questions/13774/how-do-i-detect-the-direction-of-2d-rectangular-object-collisions
 // These functions test which direction two objects (usually the player and a rectangle) collided.
 // It compares the player's old coordinates and new ones with the rectangles, to figure out which coordinate change triggered the collision.
-const collidedFromRight = (p, r) =>
-{
+const collidedFromRight = (p, r) => {
     return (p.x + p.halfWidth) <= r.x && // If the new coordinates were not overlapping...
-           (p.newX + p.halfWidth) >= r.x; // and the new ones are.
+        (p.newX + p.halfWidth) >= r.x; // and the new ones are.
 };
 
-const collidedFromLeft = (p, r) =>
-{
-    return (p.x - p.halfWidth) >= (r.x + r.width) && 
-    (p.newX - p.halfWidth) < (r.x + r.width); 
+const collidedFromLeft = (p, r) => {
+    return (p.x - p.halfWidth) >= (r.x + r.width) &&
+        (p.newX - p.halfWidth) < (r.x + r.width);
 };
 
-const collidedFromBottom = (p, r) =>
-{
-    return (p.y + p.halfHeight) < r.y && 
-           (p.newY + p.halfHeight) >= r.y;
+const collidedFromBottom = (p, r) => {
+    return (p.y + p.halfHeight) < r.y &&
+        (p.newY + p.halfHeight) >= r.y;
 };
 
-const collidedFromTop = (p, r) =>
-{
+const collidedFromTop = (p, r) => {
     return (p.y - p.halfHeight) >= (r.y + r.height) && // was not colliding
-           (p.newY - p.halfHeight) < (r.y + r.height);
+        (p.newY - p.halfHeight) < (r.y + r.height);
 };
 
+//I made these functions so they can be accessed in the items object declaration (as they are referenced before defined).
+function collectMorphBall() {
+    document.getElementById('morphball').style.display = 'inline';
+}
+
+function collectScrewAttack() {
+    document.getElementById('screwattack').style.display = 'inline';
+}
 
 const keyDown = (e) => {
     switch (e.keyCode) {
@@ -262,7 +276,7 @@ const keyDown = (e) => {
             //Only flip the player if space was not pressed the previous frame, and the player can flip based on landing on grounds/items.
             if (!keysPressed[e.keyCode] && canFlip) {
                 flipPlayer = !flipPlayer;
-                canFlip=false;
+                canFlip = false;
             }
             keysPressed[e.keyCode] = true;
             break;
