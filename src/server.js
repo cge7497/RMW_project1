@@ -25,7 +25,8 @@ const urlStruct = {
   },
   POST: {
     '/addPlayer': jsonHandler.addPlayer,
-    '/addMovement': jsonHandler.addMovement
+    '/addMovement': jsonHandler.addMovement,
+    '/updateItems': jsonHandler.updateItems,
   },
 };
 

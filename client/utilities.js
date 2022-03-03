@@ -1,7 +1,6 @@
 //draws the player shape, which is a combination of canvas lines and arcs.
-const drawPlayer = (x, y, p_ctx, flipPlayer) => {
-  let scale = 1;
-  if (flipPlayer) scale = -1;
+const drawPlayer = (x, y, p_ctx, flipPlayer, scale) => {
+  if (flipPlayer) scale *= -1;
   p_ctx.clearRect(0, 0, 640, 480);
 
   p_ctx.save();
@@ -41,7 +40,55 @@ const fadeBGColorToDarkBlue = (color_rgb) => {
 }
 
 const drawDebugPlayer = (p, p_ctx, xCam, yCam) => {
-  p_ctx.fillRect(p.x + xCam - p.width/2, p.y + yCam - p.height/2, p.width, p.height, 'blue');
+  p_ctx.fillRect(p.x + xCam - p.width / 2, p.y + yCam - p.height / 2, p.width, p.height, 'blue');
 }
 
-export { drawPlayer, drawRectangle, fadeBGColorToDarkBlue, drawDebugPlayer }
+// Handles the response from the POST request sent to the server to update the player with the item they received.
+//I got this code from class assignments. In particular https://github.com/IGM-RichMedia-at-RIT/body-parse-example-done/blob/master/client/client.html
+const handleItemResponse = async (response, name) => {
+
+  const content = document.querySelector('#createResponse');
+
+  //Should I make a unique endpoint on the server for updating a player's items?
+  switch (response.status) {
+    case 200: // Player created with those items... Think about if I want this to be able to happen.
+      break;
+    case 204: // Existing player has been updated with those items.
+      //content.innerHTML = `<b>Logged in as existing user ${name}</b>`;
+      break;
+    default: //any other status code
+      console.error("Error Updating Player: The item collected was not saved to server! Did you format the POST request correctly?")
+      break;
+  }
+};
+
+// sends the player data to the server as a POST request.
+const updatePlayer = async (name, itemId) => {
+  //Build a data string in the FORM-URLENCODED format.
+  const formData = `name=${name}&item=${itemId}`;
+
+  let response = await fetch('/updateItems', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'Accept': 'application/json',
+    },
+    body: formData,
+  });
+
+  //Once we have a response, handle it.
+  handleItemResponse(response);
+};
+
+const handlePlayerCrawl = (p, flip) => {
+  let dif = 4; let totalDif = 0;
+  if (flip) dif=-4;
+  if (p.scale === 1) {
+    p.scale = 0.1; p.halfWidth = 1; p.halfHeight = 1; totalDif=-dif;}
+  else { 
+    p.scale = 1; p.halfWidth = 4; p.halfHeight = 7; totalDif= -3 * dif;}
+    p.y+=totalDif;
+    return totalDif;
+}
+
+export { drawPlayer, drawRectangle, fadeBGColorToDarkBlue, drawDebugPlayer, updatePlayer, handlePlayerCrawl }

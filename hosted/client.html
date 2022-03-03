@@ -17,7 +17,7 @@
         <h1>Project 1: Sky Walker</h1>
     </header>
     <main>
-        <section id="createBody">
+        <section class="center">
             <h3>Create A Player</h3>
             <form id="playerForm" action="/addPlayer" method="post">
                 <label for="name">Name: </label>
@@ -53,11 +53,15 @@
                 alt="Infinite Flip Powerup">
             <img id="morphball" src="/morphball.png" style="display: none" width="16" height="16"
                 alt="Shrinking Powerup">
-            <!-- <button id="btn_reset">Reset</button> -->
             <!--Update this inner html when you get an item.-->
-            <p>Use '<strong>A</strong>' and '<strong>D</strong>' to move, <strong>SPACE</strong> to flip, and
+            <div class="center" id="instructions">
+                <div id="moveInstructions" style="display:inline">Use '<strong>A</strong>' and
+                    '<strong>D</strong>'
+                    to move, </div>
+                <div id="spaceInstructions" style="display:inline"> <strong>SPACE</strong> to flip,
+                </div> and
                 <strong>CLICK</strong> to create.
-            </p>
+            </div>
         </div>
     </main>
     <footer>

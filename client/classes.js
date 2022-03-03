@@ -49,9 +49,9 @@ const rects = [
 
 
 
-  {x: 1000, y: 0, width: 30, height: 1500, color: 'green'},
+  {x: 1000, y: 36, width: 30, height: 1500, color: 'green'},
   {x: 0, y: 1500, width: 1030, height: 30, color: 'black'},
-  {x: 0, y: 0, width: 999, height: 30, color: 'lavender'},
+  {x: 0, y: 0, width: 1030, height: 30, color: 'orange'},
 ];
 
 const specialObjects = [

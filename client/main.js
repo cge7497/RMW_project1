@@ -25,10 +25,11 @@ const items = {
     "morphball": { obtained: false, collected: collectMorphBall },
 };
 
-const player = { x: 300, y: 300, halfWidth: 4, halfHeight: 7, newX: 300, newY: 300 };
+const player = { x: 300, y: 300, halfWidth: 4, halfHeight: 7, newX: 300, newY: 300, scale: 1, name: '' };
 
 let xSpeed = 2, ySpeed = 3;
-let flipPlayer = false; let canFlip = true;
+let flipPlayer = false; let canFlip = true; let infiniteFlip = false;
+let canCrawl = false; const crawlTimerMax = 30; let hasMorphBall = false; let crawlInputTimer = 0;
 let keysPressed = [];
 let canvasWidth, canvasHeight;
 let canvasData;
@@ -41,8 +42,13 @@ const BG_DIR_MULTIPLIER = 1;
 let camXOffset = 0, camYOffset = 0
 
 //I created the sounds with SFXR (http://sfxr.me/)
-const init = () => {
-    //running init
+const init = (obj, name) => {
+    if (obj && obj.player) {
+        if (obj.player.name) player.name = obj.player.name;
+    }
+    else player.name = name;
+    console.log(player.name);
+
     sq_audio = new Audio("./sounds/blue_walker.wav");
     sq_audio.volume = 0.25;
 
@@ -88,7 +94,7 @@ const init = () => {
 
 const update = () => {
     updatePlayer();
-    utilities.drawPlayer(player.x + camXOffset, player.y + camYOffset, p_ctx, flipPlayer);
+    utilities.drawPlayer(player.x + camXOffset, player.y + camYOffset, p_ctx, flipPlayer, player.scale);
     utilities.drawDebugPlayer(player, p_ctx, camXOffset, camYOffset);
     drawLevel();
 }
@@ -97,6 +103,19 @@ const updatePlayer = () => {
     let xDif = 0, yDif = 0;
     if (keysPressed[65]) xDif = -xSpeed;
     if (keysPressed[68]) xDif = xSpeed;
+    //If the player hasn't crawled recently (so we don;t get a duplicate input)
+    if (canCrawl) {
+        if (keysPressed[87]) {
+            camYOffset -= utilities.handlePlayerCrawl(player, flipPlayer); //make sure the player stays centered despite the edits to their y coordinates caused by crawling.
+            canCrawl = false;
+            crawlInputTimer = crawlTimerMax;
+        }
+    }
+    else if (hasMorphBall) {
+        crawlInputTimer -= 1;
+        if (crawlInputTimer <= 0) canCrawl = true;
+    }
+    //else if (crawlInc<crawlIncMax) 
 
     if (flipPlayer) yDif = -ySpeed;
     else yDif = ySpeed;
@@ -114,9 +133,13 @@ const updatePlayer = () => {
     }
     else {
         //Figure out which way the collisions occurred, so the player can be moved in the correct direction.
+        //I may have to run them over again with new coordinates to catch edge cases like walking over intersection.
         //I followed this post: https://gamedev.stackexchange.com/questions/13774/how-do-i-detect-the-direction-of-2d-rectangular-object-collisions
         colls.forEach((r) => {
-            if (collidedFromBottom(player, r) || collidedFromTop(player, r)) { player.newY -= yDif; canFlip = true; }
+            if (collidedFromBottom(player, r) || collidedFromTop(player, r)) {
+                player.newY -= yDif;
+                if (!infiniteFlip) canFlip = true; //If the player doesn't have the screw attack/infinite flip, then continue updating canFlip
+            }
             if (collidedFromLeft(player, r) || collidedFromRight(player, r)) { player.newX -= xDif; }
         });
         camXOffset += player.x - player.newX;
@@ -253,10 +276,16 @@ const collidedFromTop = (p, r) => {
 //I made these functions so they can be accessed in the items object declaration (as they are referenced before defined).
 function collectMorphBall() {
     document.getElementById('morphball').style.display = 'inline';
+    document.getElementById('moveInstructions').innerHTML = `Use '<strong>A</strong>', '<strong>D</strong>', and '<strong>W</strong>' to move, `;
+    canCrawl = true; hasMorphBall = true;
+    utilities.updatePlayer(player.name, 'morphball');
 }
 
 function collectScrewAttack() {
     document.getElementById('screwattack').style.display = 'inline';
+    document.getElementById('spaceInstructions').innerHTML = `<strong>SPACE</strong> to ultra flip,`
+    infiniteFlip = true;
+    utilities.updatePlayer(player.name, 'screwattack');
 }
 
 const keyDown = (e) => {
@@ -271,13 +300,22 @@ const keyDown = (e) => {
             keysPressed[e.keyCode] = true;
             break;
 
+        //'W' press, which should only do something after the player collects the morph ball
+        case 87:
+            if (canCrawl) {
+                keysPressed[e.keyCode] = true;
+            }
+            break;
+
         //Space is pressed.
         case 32:
             e.preventDefault();
             //Only flip the player if space was not pressed the previous frame, and the player can flip based on landing on grounds/items.
-            if (!keysPressed[e.keyCode] && canFlip) {
-                flipPlayer = !flipPlayer;
-                canFlip = false;
+            if (!keysPressed[e.keyCode]) {
+                if (canFlip || infiniteFlip) {
+                    flipPlayer = !flipPlayer;
+                    canFlip = false;
+                }
             }
             keysPressed[e.keyCode] = true;
             break;
@@ -291,6 +329,10 @@ const keyUp = (e) => {
             break;
 
         case 68:
+            keysPressed[e.keyCode] = false;
+            break;
+
+        case 87:
             keysPressed[e.keyCode] = false;
             break;
 

@@ -4,44 +4,33 @@ import * as main from './main.js';
 const handleResponse = async (response, name) => {
 
     const content = document.querySelector('#createResponse');
-    let success=true;
-
+    let shouldParse = true, success = true;
     //Based on the status code, display something
     switch (response.status) {
-        case 200: //success
-            content.innerHTML = `<b>Success</b>`;
-            break;
-        case 201: //created
-            content.innerHTML = `<b>Now playing as new player ${name}</b>`;
-            break;
-        case 204: //updated (no response back from server)
+        case 200: //Success- the name we sent already holds data on the server. 
             content.innerHTML = `<b>Logged in as existing user ${name}</b>`;
             break;
+        case 201: //Success- player created
+            content.innerHTML = `<b>Now playing as new player ${name}</b>`;
+            break;
         case 400: //bad request
-            content.innerHTML = `<b>Bad Login Request</b>`; 
-            success = false;
+            content.innerHTML = `<b>Bad Login Request</b>`; success = false;
             break;
         default: //any other status code
-            content.innerHTML = `Error code not implemented by client.`; 
-            success=false;
+            content.innerHTML = `Error code not implemented by client.`; success = false;
             break;
+    }
+
+    const obj = await response.json();
+    if (obj.message) {
+        content.innerHTML += `<p>${obj.message}</p>`;
     }
     //If the player was created/logged in as, run init in the main game code.
     if (success) {
         const submitBtn = document.getElementById('submitBtn');
         submitBtn.value = "Logged in";
-        submitBtn.disabled=true;
-        main.init(); 
-        return;
-    }
-    
-    //Parse the response to json. This works because we know the server always
-    //sends back json. Await because .json() is an async function.
-    let obj = await response.json();
-
-    //If we have a message, display it.
-    if (obj.message) {
-        content.innerHTML += `<p>${obj.message}</p>`;
+        submitBtn.disabled = true;
+        if (obj) main.init(obj, name);
     }
 };
 
@@ -50,9 +39,10 @@ const sendPlayer = async (nameForm) => {
 
     //Grab all the info from the form
     const name = nameForm.querySelector('#nameField').value;
-    const age = nameForm.querySelector('#ageField').value;
+    //const age = nameForm.querySelector('#ageField').value;
+    const age = '';
     const color = nameForm.querySelector('#colorField').value;
-    
+
     //Build a data string in the FORM-URLENCODED format.
     const formData = `name=${name}&age=${age}&color=${color}`;
 
@@ -84,4 +74,4 @@ const init = () => {
 };
 
 //When the window loads, run init.
-window.onload = main.init;
+window.onload = init;

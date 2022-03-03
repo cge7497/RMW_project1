@@ -26,7 +26,7 @@ const getPlayers = (request, response) => {
 //add a user/player from the body of a POST request
 const addPlayer = (request, response, body) => {
   //default json message
-  const responseJSON = {
+  let responseJSON = {
     message: 'Both name and color are required.',
   };
   
@@ -39,11 +39,11 @@ const addPlayer = (request, response, body) => {
 
   if (!players[body.name]) {
     responseCode = 201;
-    players[body.name] = {};
+    players[body.name] = {items: {
+      'morphball': false,
+      'screwattack': false,
+    }};
   }
-
-  //add or update fields for this user name
-  players[body.name].name = body.name;
 
   //update the optional age and items value if it was sent.
   if (body.age) players[body.name].age = body.age; 
@@ -57,8 +57,16 @@ const addPlayer = (request, response, body) => {
     return respondJSON(request, response, responseCode, responseJSON);
   }
 
+  const name = body.name;
+  responseJSON = {
+    player: {
+      name: body.name,
+      player: players[body.name],
+    },
+  };
+
   //This returns if the player was updated.
-  return respondJSONMeta(request, response, responseCode);
+  return respondJSON(request, response, 200, responseJSON);
 };
 
 // How am I going to structure this?...
@@ -84,6 +92,30 @@ const addMovement = (request, response, body) => {
   }
 
   return respondJSONMeta(request, response, responseCode);
+};
+
+//update the items of a player
+const updateItems = (request, response, body) => {
+  const responseJSON = {
+    message: 'Name and item are required.',
+  };
+  
+  if (!body.name || !body.item) {
+    responseJSON.id = 'missingParams';
+    return respondJSON(request, response, 400, responseJSON);
+  }
+
+  if (!players[body.name]) {
+    responseJSON.id = 'invalidPlayer';
+    responseJSON.message = 'The request had the required parameters, but a player of that name does not exist on the server.'
+    return respondJSON(request, response, 400, responseJSON);
+  }
+
+  //add or update fields for this user name
+  players[body.name].items[body.item]=true;
+
+  //This returns if the player was updated.
+  return respondJSONMeta(request, response, 204);
 };
 
 const getOtherMovement = (request, response) => {
@@ -118,6 +150,7 @@ module.exports = {
   addPlayer,
   notFound,
   addMovement,
+  updateItems,
   getOtherMovement,
   getOtherMovementMeta
 };
