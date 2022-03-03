@@ -14,7 +14,7 @@ const urlStruct = {
     '/bundle.js': htmlHandler.getBundle,
     '/getPlayers': jsonHandler.getPlayers,
     '/getPlayer': jsonHandler.getPlayer,
-    '/getOtherMovement': jsonHandler.getOtherMovement,
+    '/getOtherMovement': jsonHandler.getOtherMovement, //unused
     '/favicon.ico': htmlHandler.getFavicon,
     '/screwattack.png': htmlHandler.getScrewAttack,
     '/morphball.png': htmlHandler.getMorphBall,
@@ -24,12 +24,12 @@ const urlStruct = {
     notFound: jsonHandler.notFound,
   },
   HEAD: {
-    '/getOtherMovementMeta': jsonHandler.getOtherMovementMeta,
+    '/getOtherMovementMeta': jsonHandler.getOtherMovementMeta, //unused
     notFound: jsonHandler.notFound,
   },
   POST: {
     '/addPlayer': jsonHandler.addPlayer,
-    '/addMovement': jsonHandler.addMovement,
+    '/addMovement': jsonHandler.addMovement, //unused
     '/updateItems': jsonHandler.updateItems,
   },
 };

@@ -15,7 +15,7 @@
 const path = require('path');
 
 module.exports = {
-    entry: './client/client.js',
+    entry: './client/playerLogin.js',
     mode: 'production',
     output: {
         path: path.resolve(__dirname, 'hosted'),
