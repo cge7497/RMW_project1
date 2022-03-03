@@ -1,19 +1,18 @@
 const players = {};
-let playerMovementThisSecond = [];
+let playerMovementThisSecond = {};
 let movementResponses = [];
 
 const resetMovement = () => {
-  const responseJSON =  {'movement': playerMovementThisSecond};
+  const responseJSON =  {movement: playerMovementThisSecond};
   movementResponses.forEach((m) =>{
     //playerMovementThisSecond[m.name];
     //don't return this player's movement...
     respondJSON(m.request, m.response, 200, responseJSON);
   });
-  console.log(responseJSON);
-  playerMovementThisSecond=[];
+  //playerMovementThisSecond=[];
 }
 
-const interval = setInterval(resetMovement, 1500);
+const interval = setInterval(resetMovement, 1000, 20);
 
 // writes a status header and a JSON object to the response.
 const respondJSON = (request, response, status, object) => {
@@ -132,9 +131,9 @@ const addMovement = (request, response, body) => {
     responseJSON.message = `The player '${body.name}' does not exist on the server.`;
     return respondJSON(request, response, 400, responseJSON);
   }
-  playerMovementThisSecond[movement.name]={};
+  const name = movement.name;
   movementResponses.push({request: request, response: response, movement: playerMovementThisSecond});
-  playerMovementThisSecond[movement.name] = JSON.stringify(movement.movement);
+  playerMovementThisSecond[name] = {name: name, color: movement.color, movement: movement.movement};
 };
 
 // update the items of a player

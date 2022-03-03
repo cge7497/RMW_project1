@@ -1,7 +1,7 @@
 //draws the player shape, which is a combination of canvas lines and arcs.
-const drawPlayer = (x, y, p_ctx, flipPlayer, scale, color) => {
+const drawPlayer = (x, y, p_ctx, flipPlayer, scale, color, shouldClear = true) => {
   if (flipPlayer) scale *= -1;
-  p_ctx.clearRect(0, 0, 640, 480);
+  if (shouldClear) p_ctx.clearRect(0, 0, 640, 480);
 
   p_ctx.save();
   p_ctx.beginPath();
@@ -14,7 +14,7 @@ const drawPlayer = (x, y, p_ctx, flipPlayer, scale, color) => {
   p_ctx.lineTo(x + (2 * scale), y + (8 * scale)); //right leg
   p_ctx.moveTo(x - (3 * scale), y + (3 * scale));
   p_ctx.lineTo(x + (3 * scale), y + (3 * scale));
-  if (color) p_ctx.strokeStyle=color;
+  if (color) p_ctx.strokeStyle = color;
   p_ctx.stroke();
   p_ctx.closePath();
   p_ctx.restore();
@@ -60,10 +60,7 @@ const handleResponse = async (response) => {
       console.error(obj);
       break;
   }
-  //console.log(obj);
-  if (obj.movement){
-    return obj.movement;
-  }
+  return obj;
 };
 
 // sends the player data to the server as a POST request.
@@ -79,13 +76,11 @@ const updatePlayer = async (name, itemId) => {
     },
     body: formData,
   });
-
-  //Once we have a response, handle it.
   handleResponse(response);
 };
 
 // sends the player data to the server as a POST request.
-const sendMovement = async (name, movement) => {
+const sendMovement = async (movement) => {
   //Build a data string in the FORM-URLENCODED format.
   const formData = `movement=${JSON.stringify(movement)}`;
 
@@ -99,17 +94,30 @@ const sendMovement = async (name, movement) => {
   });
 
   //Once we have a response, handle it.
-  handleResponse(response);
+  const obj = await response.json();
+
+  switch (response.status) {
+    case 200: // Player created with those items... Right now, this is not allowed by the server.
+      break;
+    case 204: // Existing player has been updated with those items.
+      break;
+    default: //any other status code
+      console.error(obj);
+      break;
+  }
+  return obj;
 };
 const handlePlayerCrawl = (p, flip) => {
   let dif = 4; let totalDif = 0;
-  if (flip) dif=-4;
+  if (flip) dif = -4;
   if (p.scale === 1) {
-    p.scale = 0.1; p.halfWidth = 1; p.halfHeight = 1; totalDif=-dif;}
-  else { 
-    p.scale = 1; p.halfWidth = 4; p.halfHeight = 7; totalDif= -3 * dif;}
-    p.y+=totalDif;
-    return totalDif;
+    p.scale = 0.1; p.halfWidth = 1; p.halfHeight = 1; totalDif = -dif;
+  }
+  else {
+    p.scale = 1; p.halfWidth = 4; p.halfHeight = 7; totalDif = -3 * dif;
+  }
+  p.y += totalDif;
+  return totalDif;
 }
 
 //I followed/copied much of the following collision code from https://gamedev.stackexchange.com/questions/13774/how-do-i-detect-the-direction-of-2d-rectangular-object-collisions
@@ -117,23 +125,25 @@ const handlePlayerCrawl = (p, flip) => {
 // It compares the player's old coordinates and new ones with the rectangles, to figure out which coordinate change triggered the collision.
 const collidedFromRight = (p, r) => {
   return (p.x + p.halfWidth) <= r.x && // If the new coordinates were not overlapping...
-      (p.newX + p.halfWidth) >= r.x; // and the new ones are.
+    (p.newX + p.halfWidth) >= r.x; // and the new ones are.
 };
 
 const collidedFromLeft = (p, r) => {
   return (p.x - p.halfWidth) >= (r.x + r.width) &&
-      (p.newX - p.halfWidth) < (r.x + r.width);
+    (p.newX - p.halfWidth) < (r.x + r.width);
 };
 
 const collidedFromBottom = (p, r) => {
   return (p.y + p.halfHeight) < r.y &&
-      (p.newY + p.halfHeight) >= r.y;
+    (p.newY + p.halfHeight) >= r.y;
 };
 
 const collidedFromTop = (p, r) => {
   return (p.y - p.halfHeight) >= (r.y + r.height) && // was not colliding
-      (p.newY - p.halfHeight) < (r.y + r.height);
+    (p.newY - p.halfHeight) < (r.y + r.height);
 };
 
-export { drawPlayer, drawRectangle, fadeBGColorToDarkBlue, drawDebugPlayer, updatePlayer, sendMovement, handlePlayerCrawl,
-collidedFromBottom, collidedFromLeft, collidedFromTop, collidedFromRight }
+export {
+  drawPlayer, drawRectangle, fadeBGColorToDarkBlue, drawDebugPlayer, updatePlayer, sendMovement, handlePlayerCrawl,
+  collidedFromBottom, collidedFromLeft, collidedFromTop, collidedFromRight
+}

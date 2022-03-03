@@ -11,7 +11,7 @@ Make sure stuff fits to rubric. Cloud ending, button that changes the color of b
 let w_ctx, p_ctx, bg_ctx;
 const sq_walkers = [], arc_walkers = [];
 const bgRects = [];
-const movementThisSecond = {}; let otherPlayerMovement = [];
+const movementThisSecond = {}; let otherPlayerMovement = {};
 let updateMovement = true, otherPlayerMovementFrame = 0, playerMovementFrame = 0;
 
 const imgs = {
@@ -183,26 +183,37 @@ const drawBG = () => {
     )
 };
 
-const sendMovementRequest = () => {
-    if (movementThisSecond) {
-        utilities.sendMovement(player.name, movementThisSecond).then((val) => {
-            console.log(val);
-            otherPlayerMovement = val;
-            otherPlayerMovement.splice(player.name);
-        });
+const sendMovementRequest = async () => {
+    if (movementThisSecond && !inEndGame) {
+        otherPlayerMovement = await utilities.sendMovement(movementThisSecond);
+        movementThisSecond.movement=[];
         otherPlayerMovementFrame = 0;
         playerMovementFrame = 0;
     }
 };
 
 const drawOtherPlayerMovement = () => {
-    if (otherPlayerMovement || otherPlayerMovement.length <= 1) return;
-    otherPlayerMovement.forEach((m) => {
-        const f = m[otherPlayerMovementFrame];
-        if (f) utilities.drawPlayer(f.x, f.y, p_ctx, p.flipped, 1, `${m.color}55`);
-    })
-    movementThisSecond.movement[playerMovementFrame] = { x: player.x, y: player.y, flipped: flipPlayer };
+    if (inEndGame) return;
+
+    //store this player's coordinate
+    movementThisSecond.movement.push({ x: player.x, y: player.y, flipped: flipPlayer });
+
     playerMovementFrame += 1;
+    let keys;
+    if (otherPlayerMovement.movement) {
+        // I got this Object.keys() function from https://stackoverflow.com/questions/37673454/javascript-iterate-key-value-from-json
+        // It gets the property names (meaning the player names) of the movementJSONObject.
+        keys = Object.keys(otherPlayerMovement.movement);
+    }
+    else return;
+    keys.splice(keys.indexOf(player.name), 1);
+    if (keys.length < 1) return;
+
+    w_ctx.clearRect(0, 0, 640, 480);
+    keys.forEach((m) => {
+        const f = otherPlayerMovement.movement[m].movement[otherPlayerMovementFrame];
+        if (f) utilities.drawPlayer(f.x + camXOffset, f.y + camYOffset, w_ctx, f.flipped, 1, `${otherPlayerMovement.movement[m].color}55`, false);
+    });
     otherPlayerMovementFrame += 1;
 };
 
