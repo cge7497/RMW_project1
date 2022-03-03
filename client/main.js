@@ -27,7 +27,7 @@ const items = {
 };
 
 const player = { x: 300, y: 300, halfWidth: 4, halfHeight: 7, newX: 300, newY: 300, scale: 1, name: '' };
-let pColor = 0, bgRectColor = 0;
+let trueColor = 0, bgRectColor = 0;
 
 let xSpeed = 2, ySpeed = 3;
 let flipPlayer = false; let canFlip = true; let infiniteFlip = false, inEndGame = false;
@@ -46,8 +46,7 @@ let camXOffset = 0, camYOffset = 0
 const init = (obj, name) => {
     if (obj && obj.player) {
         player.name = obj.player.name;
-        pColor = obj.player.color;
-        console.log(pColor);
+        trueColor = obj.player.color;
         if (obj.player.items) initItems(obj.player.items);
     }
     else {
@@ -55,7 +54,7 @@ const init = (obj, name) => {
     }
 
     movementThisSecond.name = player.name;
-    movementThisSecond.color = pColor;
+    movementThisSecond.color = trueColor;
     movementThisSecond.movement = [];
 
     btn_audio = new Audio("buttonClick.wav");
@@ -98,7 +97,7 @@ const update = () => {
     if (!inEndGame) {
         updatePlayer();
         utilities.drawPlayer(player.x + camXOffset, player.y + camYOffset, p_ctx, flipPlayer, player.scale);
-        utilities.drawDebugPlayer(player, p_ctx, camXOffset, camYOffset);
+        //utilities.drawDebugPlayer(player, p_ctx, camXOffset, camYOffset);
     }
     else endGame();
     drawLevel();
@@ -277,25 +276,29 @@ function collectScrewAttack(shouldSendPost = true) {
     }
 }
 
+// Runs every update once the player has clicked the yellow button.
 function endGame() {
     if (!inEndGame) {
-        bgRects.push(new classes.bgRect(Math.random() * 640, Math.random() * 480, Math.random() * 10 + 30, Math.random() * 4 + 3, pColor));
+        //create a background rectangle of the player's selected color.
+        bgRects.push(new classes.bgRect(Math.random() * 640, Math.random() * 480, Math.random() * 10 + 30, Math.random() * 4 + 3, trueColor));
         btn_audio.play();
+        inEndGame = true;
     }
-    if (bgRectColor < 255) bgRectColor += 0.2;
+    if (bgRectColor < 254) bgRectColor += 0.2;
+    utilities.drawPlayer(player.x + camXOffset, player.y + camYOffset, p_ctx, flipPlayer, player.scale, `#000000${(255 - bgRectColor).toString(16).substring(0, 2)}`);
+
     bgRects.forEach((r) => {
         if (bgRects.indexOf(r) != bgRects.length - 1) {
             r.color = `rgba(${bgRectColor}, ${bgRectColor}, ${bgRectColor}, 0.1)`;
         }
         else {
             //toString(16) converts the number to hexadecimal. I got it from https://www.w3docs.com/snippets/javascript/how-to-convert-decimal-to-hexadecimal-in-javascript.html
-            r.color = `${pColor}${bgRectColor.toString(16).substring(0, 2)}`;
+            r.color = `${trueColor}${bgRectColor.toString(16).substring(0, 2)}`;
         }
     });
     classes.rects.forEach((r) => {
         r.color = `rgba(${bgRectColor}, ${bgRectColor}, ${bgRectColor}, 0.5)`;
     });
-    inEndGame = true;
 }
 
 const keyDown = (e) => {

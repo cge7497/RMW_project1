@@ -24,6 +24,8 @@ const urlStruct = {
     notFound: jsonHandler.notFound,
   },
   HEAD: {
+    '/getPlayersMeta': jsonHandler.getPlayersMeta,
+    '/getPlayerMeta': jsonHandler.getPlayerMeta,
     '/getOtherMovementMeta': jsonHandler.getOtherMovementMeta,
     notFound: jsonHandler.notFound,
   },

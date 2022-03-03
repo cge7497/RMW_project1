@@ -48,11 +48,10 @@ const drawDebugPlayer = (p, p_ctx, xCam, yCam) => {
 // I got this code from class assignments. In particular https://github.com/IGM-RichMedia-at-RIT/body-parse-example-done/blob/master/client/client.html
 const handleResponse = async (response) => {
 
-  //const content = document.querySelector('#createResponse');
-  let obj = await response.json();
-
+  let obj;
   switch (response.status) {
     case 200: // Player created with those items... Right now, this is not allowed by the server.
+      obj = await response.json();
       break;
     case 204: // Existing player has been updated with those items.
       break;
@@ -94,12 +93,13 @@ const sendMovement = async (movement) => {
   });
 
   //Once we have a response, handle it.
-  const obj = await response.json();
+  let obj = await response.json();
 
   switch (response.status) {
-    case 200: // Player created with those items... Right now, this is not allowed by the server.
+    case 200:
+      obj = await response.json();
       break;
-    case 204: // Existing player has been updated with those items.
+    case 204:
       break;
     default: //any other status code
       console.error(obj);

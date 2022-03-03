@@ -2,17 +2,17 @@ const players = {};
 let playerMovementThisSecond = {};
 let movementResponses = [];
 
-const resetMovement = () => {
-  const responseJSON =  {movement: playerMovementThisSecond};
-  movementResponses.forEach((m) =>{
+const sendMovement = () => {
+  const responseJSON = { movement: playerMovementThisSecond };
+  movementResponses.forEach((m) => {
     //playerMovementThisSecond[m.name];
     //don't return this player's movement...
     respondJSON(m.request, m.response, 200, responseJSON);
   });
-  //playerMovementThisSecond=[];
+  movementResponses = []; playerMovementThisSecond = [];
 }
 
-const interval = setInterval(resetMovement, 1000, 20);
+const interval = setInterval(sendMovement, 1000, 20);
 
 // writes a status header and a JSON object to the response.
 const respondJSON = (request, response, status, object) => {
@@ -48,7 +48,7 @@ const addPlayer = (request, response, body) => {
     return respondJSON(request, response, 400, responseJSON);
   }
 
-  let responseCode = 204;
+  let responseCode = 200;
 
   if (!players[body.name]) {
     responseCode = 201;
@@ -63,9 +63,9 @@ const addPlayer = (request, response, body) => {
   }
 
   // update the items and currently unused age value.
-  if (body.age) players[body.name].age = body.age;
-
+  //if (body.age) players[body.name].age = body.age;
   if (body.items) players[body.name].items = body.items;
+  players[body.name].color = body.color;
 
   responseJSON = {
     player: players[body.name],
@@ -74,10 +74,8 @@ const addPlayer = (request, response, body) => {
   if (responseCode === 201) {
     return respondJSON(request, response, responseCode, responseJSON);
   }
-
-  players[body.name].color = body.color;
   // This returns if the player already existed.
-  return 
+  return respondJSON(request, response, responseCode, responseJSON)
 };
 
 // get an existing player/user.
@@ -107,10 +105,6 @@ const getPlayer = (request, response, body) => {
   return respondJSON(request, response, responseCode, responseJSON);
 };
 
-// How am I going to structure this?... (NOT IMPLEMENTED)
-// On client, record 30 frames of movement.
-// Alarm to run it once every second to send for request.
-
 // adds to the global movement array for this second.
 const addMovement = (request, response, body) => {
   const responseJSON = {
@@ -132,8 +126,8 @@ const addMovement = (request, response, body) => {
     return respondJSON(request, response, 400, responseJSON);
   }
   const name = movement.name;
-  movementResponses.push({request: request, response: response, movement: playerMovementThisSecond});
-  playerMovementThisSecond[name] = {name: name, color: movement.color, movement: movement.movement};
+  movementResponses.push({ request: request, response: response }); //I do this so I can make the server send all movement at the same time/when they should be updated.
+  playerMovementThisSecond[name] = { name: name, color: movement.color, movement: movement.movement };
 };
 
 // update the items of a player
@@ -156,25 +150,31 @@ const updateItems = (request, response, body) => {
   // add or update fields for this user name
   players[body.name].items[body.item] = true;
 
-  
+
   // This returns if the player was updated.
   return respondJSONMeta(request, response, 204);
 };
 
 const getOtherMovement = (request, response) => {
-  const responseJSON = {
-    playerMovementThisSecond,
-  };
-  respondJSON(request, response, 200, responseJSON);
+  movementResponses.push({ request: request, response: response }); //I do this so I can make the server send all movement at the same time/when they should be updated.
 };
 
 // Responds with status code 304 (Not Modified)
 // if there has been 1 or less player movement stats in the last second,
 // or status 100 (Continue) if there was other player movement recently.
+// Currently not used by client...
 const getOtherMovementMeta = (request, response) => {
-  if (playerMovementThisSecond.length <= 1) {
+  if (movementResponses.length === 0) {
     respondJSONMeta(request, response, 304);
   } else respondJSONMeta(request, response, 100);
+};
+
+const getPlayerMeta = (request, response) => {
+  return respondJSONMeta(request, response, 200);
+};
+
+const getPlayersMeta = (request, response) => {
+  return respondJSONMeta(request, response, 200);
 };
 
 const notFound = (request, response) => {
@@ -188,8 +188,8 @@ const notFound = (request, response) => {
 
 // public exports
 module.exports = {
-  getPlayers,
-  getPlayer,
+  getPlayers, getPlayersMeta,
+  getPlayer, getPlayerMeta,
   addPlayer,
   notFound,
   addMovement,

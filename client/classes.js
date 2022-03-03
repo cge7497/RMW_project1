@@ -33,7 +33,7 @@ const rects = [
 
 const specialObjects = [
   {x: -540, y: 982, width: 16, height: 16, id: 'screwattack'},
-  {x: 300, y: 982, width: 16, height: 16, id: 'morphball'},
+  {x: -600, y: 1484, width: 16, height: 16, id: 'morphball'},
   {x: 296, y: -16, width: 16, height: 16, id: 'yellowswitch'},
 ];
 
