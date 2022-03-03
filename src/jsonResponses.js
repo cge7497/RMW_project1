@@ -1,5 +1,12 @@
 const players = {};
-const playerMovementThisSecond = {};
+let playerMovementThisSecond = [];
+
+const resetMovement = () => {
+  playerMovementThisSecond=[];
+}
+
+setInterval(resetMovement, 1000);
+
 
 // writes a status header and a JSON object to the response.
 const respondJSON = (request, response, status, object) => {
@@ -101,22 +108,27 @@ const getPlayer = (request, response, body) => {
 // adds to the global movement array for this second.
 const addMovement = (request, response, body) => {
   const responseJSON = {
-    message: 'This endpoint requires a player JSON object that contains 30 JSON objects with an X, Y, and flipped variable. They were not present in the request.',
+    message: 'This endpoint requires a player JSON object with a name, color, and array of >=30 JSON objects with an X, Y, and flipped variable. They were not present in the request.',
+    id: 'missingParams',
   };
 
-  if (!body.movement || body.movement.length < 30) {
-    responseJSON.id = 'missingParams';
+  if (!body.movement) return respondJSON(request, response, 400, responseJSON);
+
+  const movement = JSON.parse(body.movement);
+
+  if (!movement.name || !movement.color || !movement.movement) {
     return respondJSON(request, response, 400, responseJSON);
   }
 
-  let responseCode = 204;
-
-  if (!players[body.name]) {
-    responseCode = 201;
-    players[body.name] = {};
+  if (!players[movement.name]) {
+    responseJSON.id = 'invalidPlayer';
+    responseJSON.message = `The player '${body.name}' does not exist on the server.`;
+    return respondJSON(request, response, 400, responseJSON);
   }
 
-  return respondJSONMeta(request, response, responseCode);
+  playerMovementThisSecond.push(movement);
+
+  return respondJSONMeta(request, response, 204);
 };
 
 // update the items of a player

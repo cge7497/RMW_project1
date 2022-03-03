@@ -1,27 +1,3 @@
-class Walker {
-  constructor(x, y, width, color, life) {
-    this.x = x;
-    this.y = y;
-    this.width = width;
-    this.color = color;
-    this.life = life;
-  }
-}
-
-// The arc walker is curved and warrants some additional properties.
-class ArcWalker extends Walker {
-  constructor(x, y, width, color, life) {
-    super(x, y, width, color, life);
-
-    // These properties are used to make the curved walkers curve smoothly.
-    this.angle = 0;
-    this.angleIncrement = Math.random() / 2 - 0.25;
-    this.startX = x;
-    this.startY = y;
-    this.radius = 0;
-  }
-}
-
 class bgRect {
   constructor(x, y, width, height, color) {
     this.x = x;
@@ -61,4 +37,4 @@ const specialObjects = [
   {x: 296, y: -16, width: 16, height: 16, id: 'yellowswitch'},
 ];
 
-export { Walker, ArcWalker, bgRect, rects, specialObjects };
+export {bgRect, rects, specialObjects };

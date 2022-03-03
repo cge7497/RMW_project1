@@ -11,7 +11,8 @@ Make sure stuff fits to rubric. Cloud ending, button that changes the color of b
 let w_ctx, p_ctx, bg_ctx;
 const sq_walkers = [], arc_walkers = [];
 const bgRects = [];
-const movementThisSecond = []; let updateMovement = true;
+const movementThisSecond = {}; let otherPlayerMovement=[];
+let updateMovement = true, otherPlayerMovementFrame = 0, playerMovementFrame = 0;
 
 const imgs = {
     'screwattack': document.getElementById('screwattack'),
@@ -46,9 +47,16 @@ const init = (obj, name) => {
     if (obj && obj.player) {
         player.name = obj.player.name;
         pColor = obj.player.color;
+        console.log(pColor);
         if (obj.player.items) initItems(obj.player.items);
     }
-    else player.name = name;
+    else {
+        player.name = name;
+    }
+
+    movementThisSecond.name = player.name; 
+    movementThisSecond.color = pColor; 
+    movementThisSecond.movement= [];
 
     btn_audio = new Audio("buttonClick.wav");
     btn_audio.volume = 0.25;
@@ -83,7 +91,7 @@ const init = (obj, name) => {
     setInterval(update, 1000 / 60);
     setInterval(drawBG, 1000 / 15);
     setInterval(sendMovementRequest, 1000);
-    //setInterval(drawOtherPlayerMovement, 1000/30);
+    setInterval(drawOtherPlayerMovement, 1000/30);
 }
 
 const update = () => {
@@ -176,7 +184,22 @@ const drawBG = () => {
 };
 
 const sendMovementRequest = () => {
+    if (movementThisSecond){
+        utilities.sendMovement(player.name, movementThisSecond);
+        console.log(movementThisSecond);
+        otherPlayerMovementFrame = 0;
+        playerMovementFrame = 0;
+    }
+};
 
+const drawOtherPlayerMovement = () => {
+    otherPlayerMovement.forEach((m)=>{
+        const f = m[otherPlayerMovementFrame];
+        if (f) utilities.drawPlayer(f.x, f.y, p_ctx, p.flipped, 1, `${m.color}55`);
+    })
+    movementThisSecond.movement[playerMovementFrame] = {x: player.x, y: player.y, flipped: flipPlayer};
+    playerMovementFrame+=1;
+    otherPlayerMovementFrame+=1;
 };
 
 //Returns true if there are collisions. It also fixes these collisions.
@@ -207,43 +230,6 @@ const CollisionsWithSpecialObjects = (p) => {
             classes.specialObjects.splice(classes.specialObjects.indexOf(o), 1);
         }
     })
-};
-
-//Not used... 
-const mouseClick = (e) => {
-    let x, y, color, type;
-    //gets where the mouse is clicked on the canvas. If it is clicked in a valid position, then it creates a walker at that spot.
-    x = e.pageX - e.target.offsetLeft;
-    y = e.pageY - e.target.offsetTop;
-
-    //If the click is not in the canvas, then return.
-    if (e.target.localName != "canvas") return;
-    type = Math.floor(Math.random() * 2);
-
-    let greenWalkerRNG = Math.random();
-    //If the player has put down 20 walkers, they'll start putting down green diamonds.
-    if (walker_counter >= 20) {
-        color = "green";
-        w_ctx.save();
-        utilities.drawGreenDiamond(x, y, WIDTH, WIDTH, w_ctx, "green");
-        w_ctx.rotate(45 * Math.PI / 180);
-        g_spawn_audio.play();
-        w_ctx.restore();
-        return;
-    }
-    //If it is a square walker it should be a shade of blue.
-    //If it is an arc walker, it should be a shade of red.
-    if (type == 0) {
-        color = utilities.getRandomColorWithinRange(20, 20, 100, 0.5, 2, 2, 155, 0.5);
-        sq_walkers.push(new classes.Walker(x, y, WIDTH, color, 100));
-        sq_audio.play();
-    }
-    else if (type == 1) {
-        color = utilities.getRandomColorWithinRange(100, 20, 20, 0.5, 155, 2, 2, .5);
-        arc_walkers.push(new classes.ArcWalker(x, y, WIDTH, color, 80));
-        arc_audio.play();
-    }
-    walker_counter += 1;
 };
 
 function initItems(items) {
@@ -285,6 +271,11 @@ function endGame() {
     bgRects.forEach((r) => {
         if (bgRects.indexOf(r) != bgRects.length - 1) {
             r.color = `rgba(${bgRectColor}, ${bgRectColor}, ${bgRectColor}, 0.1)`;
+        }
+        else{
+            //toString(16) converts the number to hexadecimal. I got it from https://www.w3docs.com/snippets/javascript/how-to-convert-decimal-to-hexadecimal-in-javascript.html
+            r.color = `${pColor}${bgRectColor.toString(16).substring(0,2)}`;
+            console.log(r.color);
         }
     });
     classes.rects.forEach((r) => {

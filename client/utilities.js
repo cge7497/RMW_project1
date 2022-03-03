@@ -1,5 +1,5 @@
 //draws the player shape, which is a combination of canvas lines and arcs.
-const drawPlayer = (x, y, p_ctx, flipPlayer, scale) => {
+const drawPlayer = (x, y, p_ctx, flipPlayer, scale, color) => {
   if (flipPlayer) scale *= -1;
   p_ctx.clearRect(0, 0, 640, 480);
 
@@ -14,6 +14,7 @@ const drawPlayer = (x, y, p_ctx, flipPlayer, scale) => {
   p_ctx.lineTo(x + (2 * scale), y + (8 * scale)); //right leg
   p_ctx.moveTo(x - (3 * scale), y + (3 * scale));
   p_ctx.lineTo(x + (3 * scale), y + (3 * scale));
+  if (color) p_ctx.strokeStyle=color;
   p_ctx.stroke();
   p_ctx.closePath();
   p_ctx.restore();
@@ -44,20 +45,18 @@ const drawDebugPlayer = (p, p_ctx, xCam, yCam) => {
 }
 
 // Handles the response from the POST request sent to the server to update the player with the item they received.
-//I got this code from class assignments. In particular https://github.com/IGM-RichMedia-at-RIT/body-parse-example-done/blob/master/client/client.html
-const handleItemResponse = async (response, name) => {
+// I got this code from class assignments. In particular https://github.com/IGM-RichMedia-at-RIT/body-parse-example-done/blob/master/client/client.html
+const handleResponse = async (response) => {
 
-  const content = document.querySelector('#createResponse');
-
-  //Should I make a unique endpoint on the server for updating a player's items?
+  //const content = document.querySelector('#createResponse');
   switch (response.status) {
-    case 200: // Player created with those items... Think about if I want this to be able to happen.
+    case 200: // Player created with those items... Right now, this is not allowed by the server.
       break;
     case 204: // Existing player has been updated with those items.
-      //content.innerHTML = `<b>Logged in as existing user ${name}</b>`;
       break;
     default: //any other status code
-      console.error("Error Updating Player: The item collected was not saved to server! Did you format the POST request correctly?")
+      let obj = await response.json();
+      console.error(obj);
       break;
   }
 };
@@ -77,9 +76,26 @@ const updatePlayer = async (name, itemId) => {
   });
 
   //Once we have a response, handle it.
-  handleItemResponse(response);
+  handleResponse(response);
 };
 
+// sends the player data to the server as a POST request.
+const sendMovement = async (name, movement) => {
+  //Build a data string in the FORM-URLENCODED format.
+  const formData = `movement=${JSON.stringify(movement)}`;
+
+  let response = await fetch('/addMovement', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'Accept': 'application/json',
+    },
+    body: formData,
+  });
+
+  //Once we have a response, handle it.
+  handleResponse(response);
+};
 const handlePlayerCrawl = (p, flip) => {
   let dif = 4; let totalDif = 0;
   if (flip) dif=-4;
@@ -114,5 +130,5 @@ const collidedFromTop = (p, r) => {
       (p.newY - p.halfHeight) < (r.y + r.height);
 };
 
-export { drawPlayer, drawRectangle, fadeBGColorToDarkBlue, drawDebugPlayer, updatePlayer, handlePlayerCrawl,
+export { drawPlayer, drawRectangle, fadeBGColorToDarkBlue, drawDebugPlayer, updatePlayer, sendMovement, handlePlayerCrawl,
 collidedFromBottom, collidedFromLeft, collidedFromTop, collidedFromRight }
