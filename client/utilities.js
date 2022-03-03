@@ -49,15 +49,20 @@ const drawDebugPlayer = (p, p_ctx, xCam, yCam) => {
 const handleResponse = async (response) => {
 
   //const content = document.querySelector('#createResponse');
+  let obj = await response.json();
+
   switch (response.status) {
     case 200: // Player created with those items... Right now, this is not allowed by the server.
       break;
     case 204: // Existing player has been updated with those items.
       break;
     default: //any other status code
-      let obj = await response.json();
       console.error(obj);
       break;
+  }
+  //console.log(obj);
+  if (obj.movement){
+    return obj.movement;
   }
 };
 

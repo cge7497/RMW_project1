@@ -11,7 +11,7 @@ Make sure stuff fits to rubric. Cloud ending, button that changes the color of b
 let w_ctx, p_ctx, bg_ctx;
 const sq_walkers = [], arc_walkers = [];
 const bgRects = [];
-const movementThisSecond = {}; let otherPlayerMovement=[];
+const movementThisSecond = {}; let otherPlayerMovement = [];
 let updateMovement = true, otherPlayerMovementFrame = 0, playerMovementFrame = 0;
 
 const imgs = {
@@ -54,9 +54,9 @@ const init = (obj, name) => {
         player.name = name;
     }
 
-    movementThisSecond.name = player.name; 
-    movementThisSecond.color = pColor; 
-    movementThisSecond.movement= [];
+    movementThisSecond.name = player.name;
+    movementThisSecond.color = pColor;
+    movementThisSecond.movement = [];
 
     btn_audio = new Audio("buttonClick.wav");
     btn_audio.volume = 0.25;
@@ -91,7 +91,7 @@ const init = (obj, name) => {
     setInterval(update, 1000 / 60);
     setInterval(drawBG, 1000 / 15);
     setInterval(sendMovementRequest, 1000);
-    setInterval(drawOtherPlayerMovement, 1000/30);
+    setInterval(drawOtherPlayerMovement, 1000 / 30);
 }
 
 const update = () => {
@@ -184,22 +184,26 @@ const drawBG = () => {
 };
 
 const sendMovementRequest = () => {
-    if (movementThisSecond){
-        utilities.sendMovement(player.name, movementThisSecond);
-        console.log(movementThisSecond);
+    if (movementThisSecond) {
+        utilities.sendMovement(player.name, movementThisSecond).then((val) => {
+            console.log(val);
+            otherPlayerMovement = val;
+            otherPlayerMovement.splice(player.name);
+        });
         otherPlayerMovementFrame = 0;
         playerMovementFrame = 0;
     }
 };
 
 const drawOtherPlayerMovement = () => {
-    otherPlayerMovement.forEach((m)=>{
+    if (otherPlayerMovement || otherPlayerMovement.length <= 1) return;
+    otherPlayerMovement.forEach((m) => {
         const f = m[otherPlayerMovementFrame];
         if (f) utilities.drawPlayer(f.x, f.y, p_ctx, p.flipped, 1, `${m.color}55`);
     })
-    movementThisSecond.movement[playerMovementFrame] = {x: player.x, y: player.y, flipped: flipPlayer};
-    playerMovementFrame+=1;
-    otherPlayerMovementFrame+=1;
+    movementThisSecond.movement[playerMovementFrame] = { x: player.x, y: player.y, flipped: flipPlayer };
+    playerMovementFrame += 1;
+    otherPlayerMovementFrame += 1;
 };
 
 //Returns true if there are collisions. It also fixes these collisions.
@@ -272,10 +276,9 @@ function endGame() {
         if (bgRects.indexOf(r) != bgRects.length - 1) {
             r.color = `rgba(${bgRectColor}, ${bgRectColor}, ${bgRectColor}, 0.1)`;
         }
-        else{
+        else {
             //toString(16) converts the number to hexadecimal. I got it from https://www.w3docs.com/snippets/javascript/how-to-convert-decimal-to-hexadecimal-in-javascript.html
-            r.color = `${pColor}${bgRectColor.toString(16).substring(0,2)}`;
-            console.log(r.color);
+            r.color = `${pColor}${bgRectColor.toString(16).substring(0, 2)}`;
         }
     });
     classes.rects.forEach((r) => {

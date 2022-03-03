@@ -1,12 +1,19 @@
 const players = {};
 let playerMovementThisSecond = [];
+let movementResponses = [];
 
 const resetMovement = () => {
+  const responseJSON =  {'movement': playerMovementThisSecond};
+  movementResponses.forEach((m) =>{
+    //playerMovementThisSecond[m.name];
+    //don't return this player's movement...
+    respondJSON(m.request, m.response, 200, responseJSON);
+  });
+  console.log(responseJSON);
   playerMovementThisSecond=[];
 }
 
-setInterval(resetMovement, 1000);
-
+const interval = setInterval(resetMovement, 1500);
 
 // writes a status header and a JSON object to the response.
 const respondJSON = (request, response, status, object) => {
@@ -71,7 +78,7 @@ const addPlayer = (request, response, body) => {
 
   players[body.name].color = body.color;
   // This returns if the player already existed.
-  return respondJSON(request, response, 200, responseJSON);
+  return 
 };
 
 // get an existing player/user.
@@ -97,7 +104,7 @@ const getPlayer = (request, response, body) => {
       player: players[body.name],
     };
   }
-
+  console.log(interval.ref);
   return respondJSON(request, response, responseCode, responseJSON);
 };
 
@@ -125,10 +132,9 @@ const addMovement = (request, response, body) => {
     responseJSON.message = `The player '${body.name}' does not exist on the server.`;
     return respondJSON(request, response, 400, responseJSON);
   }
-
-  playerMovementThisSecond.push(movement);
-
-  return respondJSONMeta(request, response, 204);
+  playerMovementThisSecond[movement.name]={};
+  movementResponses.push({request: request, response: response, movement: playerMovementThisSecond});
+  playerMovementThisSecond[movement.name] = JSON.stringify(movement.movement);
 };
 
 // update the items of a player
@@ -151,6 +157,7 @@ const updateItems = (request, response, body) => {
   // add or update fields for this user name
   players[body.name].items[body.item] = true;
 
+  
   // This returns if the player was updated.
   return respondJSONMeta(request, response, 204);
 };
