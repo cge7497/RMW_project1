@@ -1,4 +1,4 @@
-//I got this code from the class repo: https://github.com/IGM-RichMedia-at-RIT/nodemon-webpack-demo-done/blob/master/src/htmlResponses.js
+// I got this code from the class repo: https://github.com/IGM-RichMedia-at-RIT/nodemon-webpack-demo-done/blob/master/src/htmlResponses.js
 
 const fs = require('fs'); // Pull in the file system module
 
@@ -9,6 +9,9 @@ const bundle = fs.readFileSync(`${__dirname}/../hosted/bundle.js`);
 const favicon = fs.readFileSync(`${__dirname}/../hosted/icon.gif`);
 const screwattack = fs.readFileSync(`${__dirname}/../hosted/screwattack.png`);
 const morphball = fs.readFileSync(`${__dirname}/../hosted/morphball.png`);
+const yellowswitch = fs.readFileSync(`${__dirname}/../hosted/yellowswitch.png`);
+const buttonClick = fs.readFileSync(`${__dirname}/../hosted/buttonClick.wav`);
+const itemGet = fs.readFileSync(`${__dirname}/../hosted/itemGet.wav`);
 
 // A simple helper function for serving up static files
 const serveFile = (response, file, contentType) => {
@@ -37,14 +40,29 @@ const getFavicon = (request, response) => {
   serveFile(response, favicon, 'image/gif');
 };
 
-// Serve the Screw attack icon.
+// Serve the screw attack image.
 const getScrewAttack = (request, response) => {
   serveFile(response, screwattack, 'image/png');
 };
 
-// Serve the Screw attack icon.
+// Serve the morph ball image.
 const getMorphBall = (request, response) => {
   serveFile(response, morphball, 'image/png');
+};
+
+// Serve the yellow switch image.
+const getYellowSwitch = (request, response) => {
+  serveFile(response, yellowswitch, 'image/png');
+};
+
+// Serve the sound that plays when the player pushes the yellow button.
+const getButtonSound = (request, response) => {
+  serveFile(response, buttonClick, 'image/png');
+};
+
+// Serve the sound that plays when the player collects an item.
+const getItemSound = (request, response) => {
+  serveFile(response, itemGet, 'image/png');
 };
 
 module.exports = {
@@ -53,5 +71,8 @@ module.exports = {
   getBundle,
   getFavicon,
   getScrewAttack,
-  getMorphBall
+  getMorphBall,
+  getYellowSwitch,
+  getButtonSound,
+  getItemSound,
 };

@@ -1,11 +1,9 @@
 import * as utilities from "./utilities.js";
 import * as classes from "./classes.js"
 
-//Idea for favicon: Just the clouds with clear background. No player.
 /*
 Todo list: Figure out movement transferring.
-Send a request to the server when collecting an item.
-Move object declarations to classes.js, and delete unused code from it.
+Delete unused code from it.
 Also need function with GET parameters.
 
 Make sure stuff fits to rubric. Cloud ending, button that changes the color of blocks in the world. That'll be a big function for the server.
@@ -18,22 +16,24 @@ const movementThisSecond = []; let updateMovement = true;
 const imgs = {
     'screwattack': document.getElementById('screwattack'),
     'morphball': document.getElementById('morphball'),
+    'yellowswitch': document.getElementById('yellowswitch'),
 };
 
 const items = {
     'screwattack': { obtained: false, collected: collectScrewAttack },
-    "morphball": { obtained: false, collected: collectMorphBall },
+    'morphball': { obtained: false, collected: collectMorphBall },
+    'yellowswitch': { collected: endGame }
 };
 
 const player = { x: 300, y: 300, halfWidth: 4, halfHeight: 7, newX: 300, newY: 300, scale: 1, name: '' };
+let pColor = 0, bgRectColor = 0;
 
 let xSpeed = 2, ySpeed = 3;
-let flipPlayer = false; let canFlip = true; let infiniteFlip = false;
+let flipPlayer = false; let canFlip = true; let infiniteFlip = false, inEndGame = false;
 let canCrawl = false; const crawlTimerMax = 30; let hasMorphBall = false; let crawlInputTimer = 0;
 let keysPressed = [];
 let canvasWidth, canvasHeight;
-let canvasData;
-let sq_audio, arc_audio, g_spawn_audio, g_get_audio;
+let btn_audio, item_audio;
 let walker_counter = 0;
 let bg_dir_rad = 0, bg_dir_rad_Inc = 0;
 let bg_color = "white", bg_color_rgb = [255, 255, 255], should_change_bg_color = false;
@@ -44,22 +44,16 @@ let camXOffset = 0, camYOffset = 0
 //I created the sounds with SFXR (http://sfxr.me/)
 const init = (obj, name) => {
     if (obj && obj.player) {
-        if (obj.player.name) player.name = obj.player.name;
+        player.name = obj.player.name;
+        pColor = obj.player.color;
+        if (obj.player.items) initItems(obj.player.items);
     }
     else player.name = name;
-    console.log(player.name);
 
-    sq_audio = new Audio("./sounds/blue_walker.wav");
-    sq_audio.volume = 0.25;
-
-    arc_audio = new Audio("./sounds/red_walker.wav");
-    arc_audio.volume = 0.25;
-
-    g_spawn_audio = new Audio("./sounds/green_spawn.wav");
-    g_spawn_audio.volume = 0.25;
-
-    g_get_audio = new Audio("./sounds/green_get.wav");
-    g_get_audio.volume = 0.25;
+    btn_audio = new Audio("buttonClick.wav");
+    btn_audio.volume = 0.25;
+    item_audio = new Audio("itemGet.wav");
+    item_audio.volume = 0.25;
 
     let p_canvas = document.querySelector("#canvas_player");
     let w_canvas = document.querySelector("#canvas_walkers");
@@ -93,9 +87,12 @@ const init = (obj, name) => {
 }
 
 const update = () => {
-    updatePlayer();
-    utilities.drawPlayer(player.x + camXOffset, player.y + camYOffset, p_ctx, flipPlayer, player.scale);
-    utilities.drawDebugPlayer(player, p_ctx, camXOffset, camYOffset);
+    if (!inEndGame) {
+        updatePlayer();
+        utilities.drawPlayer(player.x + camXOffset, player.y + camYOffset, p_ctx, flipPlayer, player.scale);
+        utilities.drawDebugPlayer(player, p_ctx, camXOffset, camYOffset);
+    }
+    else endGame();
     drawLevel();
 }
 
@@ -103,45 +100,35 @@ const updatePlayer = () => {
     let xDif = 0, yDif = 0;
     if (keysPressed[65]) xDif = -xSpeed;
     if (keysPressed[68]) xDif = xSpeed;
+    //else if (crawlInc<crawlIncMax) 
+
+    if (flipPlayer) yDif = -ySpeed;
+    else yDif = ySpeed;
+
     //If the player hasn't crawled recently (so we don;t get a duplicate input)
     if (canCrawl) {
         if (keysPressed[87]) {
-            camYOffset -= utilities.handlePlayerCrawl(player, flipPlayer); //make sure the player stays centered despite the edits to their y coordinates caused by crawling.
+            camYOffset -= utilities.handlePlayerCrawl(player, flipPlayer); //make sure the camera stays centered on player despite edits to their y coordinates caused by crawling.
             canCrawl = false;
             crawlInputTimer = crawlTimerMax;
+            xDif = 0; yDif = 0;//making the player not move horizontally when changing to/from ball prevents some collision errors.
         }
     }
     else if (hasMorphBall) {
         crawlInputTimer -= 1;
         if (crawlInputTimer <= 0) canCrawl = true;
     }
-    //else if (crawlInc<crawlIncMax) 
-
-    if (flipPlayer) yDif = -ySpeed;
-    else yDif = ySpeed;
 
     player.newX = player.x + xDif;
     player.newY = player.y + yDif;
 
-    let colls = CollisionsWithLevel(player); //returns a bool if not colliding, otherwise returns an array of collisions.
-    if (colls.length == 0) {
+    let colliding = CollisionsWithLevel(player, xDif, yDif); //returns a bool if not colliding, otherwise returns an array of collisions.
+    if (!colliding) {
         player.x += xDif; player.y += yDif;
-        //console.log(`CamX: ${camXOffset}, Camy: ${camYOffset}`);
-        //console.log(`PlayerX: ${player.x}, PlayerYa : ${player.y }`);
         camXOffset -= xDif;
         camYOffset -= yDif;
     }
     else {
-        //Figure out which way the collisions occurred, so the player can be moved in the correct direction.
-        //I may have to run them over again with new coordinates to catch edge cases like walking over intersection.
-        //I followed this post: https://gamedev.stackexchange.com/questions/13774/how-do-i-detect-the-direction-of-2d-rectangular-object-collisions
-        colls.forEach((r) => {
-            if (collidedFromBottom(player, r) || collidedFromTop(player, r)) {
-                player.newY -= yDif;
-                if (!infiniteFlip) canFlip = true; //If the player doesn't have the screw attack/infinite flip, then continue updating canFlip
-            }
-            if (collidedFromLeft(player, r) || collidedFromRight(player, r)) { player.newX -= xDif; }
-        });
         camXOffset += player.x - player.newX;
         camYOffset += player.y - player.newY;
         player.x = player.newX;
@@ -192,15 +179,23 @@ const sendMovementRequest = () => {
 
 };
 
-const CollisionsWithLevel = (p) => {
-    const coll_rects = [];
+//Returns true if there are collisions. It also fixes these collisions.
+const CollisionsWithLevel = (p, xDif, yDif) => {
+    let colliding = false;
     classes.rects.forEach((r) => {
         if (p.newX - p.halfWidth < r.x + r.width && p.newX + (p.halfWidth) > r.x
             && p.newY - p.halfHeight < r.y + r.height && p.newY + p.halfHeight > r.y) {
-            coll_rects.push(r);
+            colliding = true;
+            if (utilities.collidedFromBottom(p, r) || utilities.collidedFromTop(p, r)) {
+                p.newY -= yDif;
+                if (!infiniteFlip) canFlip = true; //If the player doesn't have the screw attack/infinite flip, then continue updating canFlip
+            }
+            else if (utilities.collidedFromLeft(p, r) || utilities.collidedFromRight(p, r)) {
+                p.newX -= xDif;
+            }
         }
-    })
-    return coll_rects;
+    });
+    return colliding;
 };
 
 const CollisionsWithSpecialObjects = (p) => {
@@ -214,6 +209,7 @@ const CollisionsWithSpecialObjects = (p) => {
     })
 };
 
+//Not used... 
 const mouseClick = (e) => {
     let x, y, color, type;
     //gets where the mouse is clicked on the canvas. If it is clicked in a valid position, then it creates a walker at that spot.
@@ -250,42 +246,51 @@ const mouseClick = (e) => {
     walker_counter += 1;
 };
 
-//I followed/copied much of the following collision code from https://gamedev.stackexchange.com/questions/13774/how-do-i-detect-the-direction-of-2d-rectangular-object-collisions
-// These functions test which direction two objects (usually the player and a rectangle) collided.
-// It compares the player's old coordinates and new ones with the rectangles, to figure out which coordinate change triggered the collision.
-const collidedFromRight = (p, r) => {
-    return (p.x + p.halfWidth) <= r.x && // If the new coordinates were not overlapping...
-        (p.newX + p.halfWidth) >= r.x; // and the new ones are.
-};
-
-const collidedFromLeft = (p, r) => {
-    return (p.x - p.halfWidth) >= (r.x + r.width) &&
-        (p.newX - p.halfWidth) < (r.x + r.width);
-};
-
-const collidedFromBottom = (p, r) => {
-    return (p.y + p.halfHeight) < r.y &&
-        (p.newY + p.halfHeight) >= r.y;
-};
-
-const collidedFromTop = (p, r) => {
-    return (p.y - p.halfHeight) >= (r.y + r.height) && // was not colliding
-        (p.newY - p.halfHeight) < (r.y + r.height);
-};
+function initItems(items) {
+    if (items['morphball']) {
+        collectMorphBall(false);
+    }
+    if (items['screwattack']) {
+        collectScrewAttack(false);
+    }
+}
 
 //I made these functions so they can be accessed in the items object declaration (as they are referenced before defined).
-function collectMorphBall() {
+function collectMorphBall(shouldSendPost = true) {
     document.getElementById('morphball').style.display = 'inline';
     document.getElementById('moveInstructions').innerHTML = `Use '<strong>A</strong>', '<strong>D</strong>', and '<strong>W</strong>' to move, `;
     canCrawl = true; hasMorphBall = true;
-    utilities.updatePlayer(player.name, 'morphball');
+    if (shouldSendPost === true) {
+        utilities.updatePlayer(player.name, 'morphball');
+        item_audio.play();
+    }
 }
 
-function collectScrewAttack() {
+function collectScrewAttack(shouldSendPost = true) {
     document.getElementById('screwattack').style.display = 'inline';
-    document.getElementById('spaceInstructions').innerHTML = `<strong>SPACE</strong> to ultra flip,`
+    document.getElementById('spaceInstructions').innerHTML = `<strong>SPACE</strong> to ultra flip`
     infiniteFlip = true;
-    utilities.updatePlayer(player.name, 'screwattack');
+    if (shouldSendPost === true) {
+        utilities.updatePlayer(player.name, 'screwattack');
+        item_audio.play();
+    }
+}
+
+function endGame() {
+    if (!inEndGame) {
+        bgRects.push(new classes.bgRect(Math.random() * 640, Math.random() * 480, Math.random() * 10 + 30, Math.random() * 4 + 3, pColor));
+        btn_audio.play();
+    }
+    if (bgRectColor < 255) bgRectColor += 0.2;
+    bgRects.forEach((r) => {
+        if (bgRects.indexOf(r) != bgRects.length - 1) {
+            r.color = `rgba(${bgRectColor}, ${bgRectColor}, ${bgRectColor}, 0.1)`;
+        }
+    });
+    classes.rects.forEach((r) => {
+        r.color = `rgba(${bgRectColor}, ${bgRectColor}, ${bgRectColor}, 0.5)`;
+    });
+    inEndGame = true;
 }
 
 const keyDown = (e) => {

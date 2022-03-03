@@ -13,10 +13,14 @@ const urlStruct = {
     '/style.css': htmlHandler.getCSS,
     '/bundle.js': htmlHandler.getBundle,
     '/getPlayers': jsonHandler.getPlayers,
+    '/getPlayer': jsonHandler.getPlayer,
     '/getOtherMovement': jsonHandler.getOtherMovement,
     '/favicon.ico': htmlHandler.getFavicon,
     '/screwattack.png': htmlHandler.getScrewAttack,
     '/morphball.png': htmlHandler.getMorphBall,
+    '/yellowswitch.png': htmlHandler.getYellowSwitch,
+    '/buttonClick.wav': htmlHandler.getButtonSound,
+    '/itemGet.wav': htmlHandler.getItemSound,
     notFound: jsonHandler.notFound,
   },
   HEAD: {
@@ -48,8 +52,8 @@ const parseBody = (request, response, handler) => {
     const bodyString = Buffer.concat(body).toString();
     const bodyParams = query.parse(bodyString);
 
-    //Once we have the bodyParams object, we will call the handler function. We then
-    //proceed much like we would with a GET request.
+    // Once we have the bodyParams object, we will call the handler function. We then
+    // proceed much like we would with a GET request.
     handler(request, response, bodyParams);
   });
 };
@@ -62,15 +66,12 @@ const onRequest = (request, response) => {
   let { method } = request;
   if (!request.method) method = 'GET'; // defaults to a GET method as described in assignment
 
-
-  if (method === 'POST')
-    return parseBody(request, response, urlStruct[method][parsedUrl.pathname]);
+  if (method === 'POST') { return parseBody(request, response, urlStruct[method][parsedUrl.pathname]); }
 
   if (urlStruct[method][parsedUrl.pathname]) {
-    urlStruct[method][parsedUrl.pathname](request, response, queryParams);
-  } else {
-    urlStruct[method].notFound(request, response);
+    return urlStruct[method][parsedUrl.pathname](request, response, queryParams);
   }
+  return urlStruct[method].notFound(request, response);
 };
 
 http.createServer(onRequest).listen(port, () => {

@@ -91,4 +91,28 @@ const handlePlayerCrawl = (p, flip) => {
     return totalDif;
 }
 
-export { drawPlayer, drawRectangle, fadeBGColorToDarkBlue, drawDebugPlayer, updatePlayer, handlePlayerCrawl }
+//I followed/copied much of the following collision code from https://gamedev.stackexchange.com/questions/13774/how-do-i-detect-the-direction-of-2d-rectangular-object-collisions
+// These functions test which direction two objects (usually the player and a rectangle) collided.
+// It compares the player's old coordinates and new ones with the rectangles, to figure out which coordinate change triggered the collision.
+const collidedFromRight = (p, r) => {
+  return (p.x + p.halfWidth) <= r.x && // If the new coordinates were not overlapping...
+      (p.newX + p.halfWidth) >= r.x; // and the new ones are.
+};
+
+const collidedFromLeft = (p, r) => {
+  return (p.x - p.halfWidth) >= (r.x + r.width) &&
+      (p.newX - p.halfWidth) < (r.x + r.width);
+};
+
+const collidedFromBottom = (p, r) => {
+  return (p.y + p.halfHeight) < r.y &&
+      (p.newY + p.halfHeight) >= r.y;
+};
+
+const collidedFromTop = (p, r) => {
+  return (p.y - p.halfHeight) >= (r.y + r.height) && // was not colliding
+      (p.newY - p.halfHeight) < (r.y + r.height);
+};
+
+export { drawPlayer, drawRectangle, fadeBGColorToDarkBlue, drawDebugPlayer, updatePlayer, handlePlayerCrawl,
+collidedFromBottom, collidedFromLeft, collidedFromTop, collidedFromRight }

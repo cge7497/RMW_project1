@@ -14,7 +14,7 @@ const respondJSONMeta = (request, response, status) => {
   response.end();
 };
 
-//return user object as JSON
+// return user object as JSON
 const getPlayers = (request, response) => {
   const responseJSON = {
     players,
@@ -23,13 +23,13 @@ const getPlayers = (request, response) => {
   respondJSON(request, response, 200, responseJSON);
 };
 
-//add a user/player from the body of a POST request
+// add a user/player from the body of a POST request
 const addPlayer = (request, response, body) => {
-  //default json message
+  // default json message
   let responseJSON = {
     message: 'Both name and color are required.',
   };
-  
+
   if (!body.name || !body.color) {
     responseJSON.id = 'missingParams';
     return respondJSON(request, response, 400, responseJSON);
@@ -39,41 +39,67 @@ const addPlayer = (request, response, body) => {
 
   if (!players[body.name]) {
     responseCode = 201;
-    players[body.name] = {items: {
-      'morphball': false,
-      'screwattack': false,
-    }};
+    players[body.name] = {
+      name: body.name,
+      color: body.color,
+      items: {
+        morphball: false,
+        screwattack: false,
+      },
+    };
   }
 
-  //update the optional age and items value if it was sent.
-  if (body.age) players[body.name].age = body.age; 
+  // update the items and currently unused age value.
+  if (body.age) players[body.name].age = body.age;
 
-  if(body.items) players[body.name].items = body.items; 
+  if (body.items) players[body.name].items = body.items;
 
-  responseJSON.message = "Successfully created player!";
+  responseJSON = {
+    player: players[body.name],
+  };
 
   if (responseCode === 201) {
-    responseJSON.message = 'Created Successfully';
     return respondJSON(request, response, responseCode, responseJSON);
   }
 
-  const name = body.name;
-  responseJSON = {
-    player: {
-      name: body.name,
-      player: players[body.name],
-    },
-  };
-
-  //This returns if the player was updated.
+  players[body.name].color = body.color;
+  // This returns if the player already existed.
   return respondJSON(request, response, 200, responseJSON);
 };
 
-// How am I going to structure this?...
-// On client, record 30 frames of movement. Once every second frame. Do I record every frame, or every second?
+// get an existing player/user.
+const getPlayer = (request, response, body) => {
+  // default json message
+  let responseJSON = {
+    message: 'A name parameter is required.',
+  };
+
+  if (!body.name) {
+    responseJSON.id = 'missingParams';
+    return respondJSON(request, response, 400, responseJSON);
+  }
+
+  let responseCode = 200;
+
+  if (!players[body.name]) {
+    responseCode = 400;
+    responseJSON.id = 'invalidParams';
+    responseJSON.message = `A player of the name ${body.name} does not exist.`;
+  }
+  else {
+    responseJSON = {
+      player: players[body.name],
+    };
+  }
+  
+  return respondJSON(request, response, responseCode, responseJSON);
+};
+
+// How am I going to structure this?... (NOT IMPLEMENTED)
+// On client, record 30 frames of movement.
 // Alarm to run it once every second to send for request.
 
-//adds to the global movement array for this second.
+// adds to the global movement array for this second.
 const addMovement = (request, response, body) => {
   const responseJSON = {
     message: 'This endpoint requires a player JSON object that contains 30 JSON objects with an X, Y, and flipped variable. They were not present in the request.',
@@ -94,12 +120,12 @@ const addMovement = (request, response, body) => {
   return respondJSONMeta(request, response, responseCode);
 };
 
-//update the items of a player
+// update the items of a player
 const updateItems = (request, response, body) => {
   const responseJSON = {
     message: 'Name and item are required.',
   };
-  
+
   if (!body.name || !body.item) {
     responseJSON.id = 'missingParams';
     return respondJSON(request, response, 400, responseJSON);
@@ -107,33 +133,32 @@ const updateItems = (request, response, body) => {
 
   if (!players[body.name]) {
     responseJSON.id = 'invalidPlayer';
-    responseJSON.message = 'The request had the required parameters, but a player of that name does not exist on the server.'
+    responseJSON.message = 'The request had the required parameters, but a player of that name does not exist on the server.';
     return respondJSON(request, response, 400, responseJSON);
   }
 
-  //add or update fields for this user name
-  players[body.name].items[body.item]=true;
+  // add or update fields for this user name
+  players[body.name].items[body.item] = true;
 
-  //This returns if the player was updated.
+  // This returns if the player was updated.
   return respondJSONMeta(request, response, 204);
 };
 
 const getOtherMovement = (request, response) => {
-    const responseJSON = {
-      playerMovementThisSecond,
-    };
-    respondJSON(request, response, 200, responseJSON);
-}
+  const responseJSON = {
+    playerMovementThisSecond,
+  };
+  respondJSON(request, response, 200, responseJSON);
+};
 
-// Responds with status code 304 (Not Modified) if there has been 1 or less player movement stats in the last second,
+// Responds with status code 304 (Not Modified)
+// if there has been 1 or less player movement stats in the last second,
 // or status 100 (Continue) if there was other player movement recently.
 const getOtherMovementMeta = (request, response) => {
-  if (playerMovementThisSecond.length <= 1){
+  if (playerMovementThisSecond.length <= 1) {
     respondJSONMeta(request, response, 304);
-  }
-  else respondJSONMeta(request, response, 100);
-}
-
+  } else respondJSONMeta(request, response, 100);
+};
 
 const notFound = (request, response) => {
   const responseJSON = {
@@ -144,13 +169,14 @@ const notFound = (request, response) => {
   respondJSON(request, response, 404, responseJSON);
 };
 
-//public exports
+// public exports
 module.exports = {
   getPlayers,
+  getPlayer,
   addPlayer,
   notFound,
   addMovement,
   updateItems,
   getOtherMovement,
-  getOtherMovementMeta
+  getOtherMovementMeta,
 };

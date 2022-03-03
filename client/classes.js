@@ -49,14 +49,16 @@ const rects = [
 
 
 
-  {x: 1000, y: 36, width: 30, height: 1500, color: 'green'},
+  {x: 1000, y: 36, width: 30, height: 1494, color: 'green'},
   {x: 0, y: 1500, width: 1030, height: 30, color: 'black'},
+  {x: -700, y: 1500, width: 700, height: 30, color: 'yellow'},
   {x: 0, y: 0, width: 1030, height: 30, color: 'orange'},
 ];
 
 const specialObjects = [
   {x: -540, y: 982, width: 16, height: 16, id: 'screwattack'},
   {x: 300, y: 982, width: 16, height: 16, id: 'morphball'},
+  {x: 296, y: -16, width: 16, height: 16, id: 'yellowswitch'},
 ];
 
 export { Walker, ArcWalker, bgRect, rects, specialObjects };
