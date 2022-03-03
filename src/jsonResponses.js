@@ -85,13 +85,12 @@ const getPlayer = (request, response, body) => {
     responseCode = 400;
     responseJSON.id = 'invalidParams';
     responseJSON.message = `A player of the name ${body.name} does not exist.`;
-  }
-  else {
+  } else {
     responseJSON = {
       player: players[body.name],
     };
   }
-  
+
   return respondJSON(request, response, responseCode, responseJSON);
 };
 
