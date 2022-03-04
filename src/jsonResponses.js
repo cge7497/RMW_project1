@@ -1,25 +1,8 @@
 const level = require('./levelData.js');
 
 const players = {};
-let playerMovementThisSecond = {};
+const playerMovementThisSecond = {};
 let movementResponses = [];
-
-const sendMovement = () => {
-  const responseJSON = { movement: playerMovementThisSecond };
-  movementResponses.forEach((m) => {
-    //playerMovementThisSecond[m.name];
-    //don't return this player's movement...
-    respondJSON(m.request, m.response, 200, responseJSON);
-  });
-  movementResponses = []; 
-  Object.keys(playerMovementThisSecond).forEach((p) =>{
-    if (p.length && p.length > 60){
-      p.splice(0, p.length -31);
-    }
-  });
-}
-
-const interval = setInterval(sendMovement, 1000, 20);
 
 // writes a status header and a JSON object to the response.
 const respondJSON = (request, response, status, object) => {
@@ -33,6 +16,23 @@ const respondJSONMeta = (request, response, status) => {
   response.writeHead(status, { 'Content-Type': 'application/json' });
   response.end();
 };
+
+const sendMovement = () => {
+  const responseJSON = { movement: playerMovementThisSecond };
+  movementResponses.forEach((m) => {
+    // playerMovementThisSecond[m.name];
+    // don't return this player's movement...
+    respondJSON(m.request, m.response, 200, responseJSON);
+  });
+  movementResponses = [];
+  Object.keys(playerMovementThisSecond).forEach((p) => {
+    if (p.length && p.length > 60) {
+      p.splice(0, p.length - 31);
+    }
+  });
+};
+
+setInterval(sendMovement, 1000);
 
 // return user object as JSON
 const getPlayers = (request, response) => {
@@ -70,16 +70,16 @@ const addPlayer = (request, response, body) => {
   }
 
   // update the items and currently unused age value.
-  //if (body.age) players[body.name].age = body.age;
+  // if (body.age) players[body.name].age = body.age;
   if (body.items) players[body.name].items = body.items;
   players[body.name].color = body.color;
 
   responseJSON = {
-    player: players[body.name]
+    player: players[body.name],
   };
 
   // This returns both if the player already existed and if they were created.
-  return respondJSON(request, response, responseCode, responseJSON)
+  return respondJSON(request, response, responseCode, responseJSON);
 };
 
 // get an existing player/user.
@@ -105,7 +105,7 @@ const getPlayer = (request, response, body) => {
       player: players[body.name],
     };
   }
-  console.log(interval.ref);
+  // console.log(interval.ref);
   return respondJSON(request, response, responseCode, responseJSON);
 };
 
@@ -129,9 +129,13 @@ const addMovement = (request, response, body) => {
     responseJSON.message = `The player '${body.name}' does not exist on the server.`;
     return respondJSON(request, response, 400, responseJSON);
   }
-  const name = movement.name;
-  movementResponses.push({ request: request, response: response }); //I do this so I can make the server send all movement at the same time/when they should be updated.
-  playerMovementThisSecond[name] = { name: name, color: movement.color, movement: movement.movement };
+
+  const { name } = movement;
+  // I do this so I can make the server send all movement at the same time/after it's been updated
+  movementResponses.push({ request, response });
+  playerMovementThisSecond[name] = { name, color: movement.color, movement: movement.movement };
+
+  return respondJSONMeta(request, response, 204);
 };
 
 // update the items of a player
@@ -153,7 +157,6 @@ const updateItems = (request, response, body) => {
 
   // add or update fields for this user name
   players[body.name].items[body.item] = true;
-
 
   // This returns if the player was updated.
   return respondJSONMeta(request, response, 204);
@@ -177,19 +180,18 @@ const addCloud = (request, response, body) => {
 };
 
 const getOtherMovement = (request, response) => {
-  movementResponses.push({ request: request, response: response }); //I do this so I can make the server send all movement at the same time/when they should be updated.
+  // I do this so I can make the server send all movement at the same time/after it's been updated
+  movementResponses.push({ request, response });
 };
 
 const getLevel = (request, response) => {
   const responseJSON = {
     level: level.data,
-  }
+  };
   return respondJSON(request, response, 200, responseJSON);
-}
+};
 
-const getLevelMeta = (request, response) => {
-  return respondJSONMeta(request, response, 200);
-}
+const getLevelMeta = (request, response) => respondJSONMeta(request, response, 200);
 
 // Responds with status code 304 (Not Modified)
 // if there has been 1 or less player movement stats in the last second,
@@ -201,13 +203,9 @@ const getOtherMovementMeta = (request, response) => {
   } else respondJSONMeta(request, response, 100);
 };
 
-const getPlayerMeta = (request, response) => {
-  return respondJSONMeta(request, response, 200);
-};
+const getPlayerMeta = (request, response) => respondJSONMeta(request, response, 200);
 
-const getPlayersMeta = (request, response) => {
-  return respondJSONMeta(request, response, 200);
-};
+const getPlayersMeta = (request, response) => respondJSONMeta(request, response, 200);
 
 const notFound = (request, response) => {
   const responseJSON = {
@@ -220,10 +218,14 @@ const notFound = (request, response) => {
 
 // public exports
 module.exports = {
-  getPlayers, getPlayersMeta,
-  getPlayer, getPlayerMeta,
-  getLevel, getLevelMeta,
-  getOtherMovement, getOtherMovementMeta,
+  getPlayers,
+  getPlayersMeta,
+  getPlayer,
+  getPlayerMeta,
+  getLevel,
+  getLevelMeta,
+  getOtherMovement,
+  getOtherMovementMeta,
   addPlayer,
   addMovement,
   updateItems,

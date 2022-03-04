@@ -25,7 +25,8 @@ const urlStruct = {
     notFound: jsonHandler.notFound,
   },
   HEAD: {
-    //I wasn't sure what the rubric meant regarding supporting HEAD requests, so I just handle both URL possibilities.
+    // I wasn't sure what the rubric meant regarding supporting HEAD requests,
+    // so I just handle both URL possibilities.
     '/getPlayers': jsonHandler.getPlayersMeta,
     '/getPlayer': jsonHandler.getPlayerMeta,
     '/getLevel': jsonHandler.getLevelMeta,
@@ -41,7 +42,7 @@ const urlStruct = {
     '/addMovement': jsonHandler.addMovement,
     '/updateItems': jsonHandler.updateItems,
     '/addCloud': jsonHandler.addCloud,
-    notFound: jsonHandler.notFound
+    notFound: jsonHandler.notFound,
   },
 };
 
