@@ -33,80 +33,6 @@ const drawRectangle = (x, y, width, height, ctx, color, fill) => {
   ctx.restore();
 }
 
-const fadeBGColorToDarkBlue = (color_rgb) => {
-  if (color_rgb[0] > 15) color_rgb[0] -= 0.1;
-  if (color_rgb[1] > 31) color_rgb[1] -= 0.1;
-  if (color_rgb[2] > 56) color_rgb[2] -= 0.1;
-  return color_rgb;
-}
-
-const drawDebugPlayer = (p, p_ctx, xCam, yCam) => {
-  p_ctx.fillRect(p.x + xCam - p.width / 2, p.y + yCam - p.height / 2, p.width, p.height, 'blue');
-}
-
-// Handles the response from the POST request sent to the server to update the player with the item they received.
-// I got this code from class assignments. In particular https://github.com/IGM-RichMedia-at-RIT/body-parse-example-done/blob/master/client/client.html
-const handleResponse = async (response) => {
-
-  let obj;
-  switch (response.status) {
-    case 200: // Player created with those items... Right now, this is not allowed by the server.
-      obj = await response.json();
-      break;
-    case 204: // Existing player has been updated with those items.
-      break;
-    default: //any other status code
-      console.error(obj);
-      break;
-  }
-  return obj;
-};
-
-// sends the player data to the server as a POST request.
-const updatePlayer = async (name, itemId) => {
-  //Build a data string in the FORM-URLENCODED format.
-  const formData = `name=${name}&item=${itemId}`;
-
-  let response = await fetch('/updateItems', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-      'Accept': 'application/json',
-    },
-    body: formData,
-  });
-  handleResponse(response);
-};
-
-// sends the player data to the server as a POST request.
-const sendMovement = async (movement) => {
-  //Build a data string in the FORM-URLENCODED format.
-  const formData = `movement=${JSON.stringify(movement)}`;
-
-  let response = await fetch('/addMovement', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-      'Accept': 'application/json',
-    },
-    body: formData,
-  });
-
-  //Once we have a response, handle it.
-  let obj = await response.json();
-
-  switch (response.status) {
-    case 200:
-      obj = await response.json();
-      break;
-    case 204:
-      break;
-    default: //any other status code
-      console.error(obj);
-      break;
-  }
-  return obj;
-};
 const handlePlayerCrawl = (p, flip) => {
   let dif = 4; let totalDif = 0;
   if (flip) dif = -4;
@@ -118,6 +44,18 @@ const handlePlayerCrawl = (p, flip) => {
   }
   p.y += totalDif;
   return totalDif;
+}
+
+
+const fadeBGColorToDarkBlue = (color_rgb) => {
+  if (color_rgb[0] > 15) color_rgb[0] -= 0.1;
+  if (color_rgb[1] > 31) color_rgb[1] -= 0.1;
+  if (color_rgb[2] > 56) color_rgb[2] -= 0.1;
+  return color_rgb;
+}
+
+const drawDebugPlayer = (p, p_ctx, xCam, yCam) => {
+  p_ctx.fillRect(p.x + xCam - p.width / 2, p.y + yCam - p.height / 2, p.width, p.height, 'blue');
 }
 
 //I followed/copied much of the following collision code from https://gamedev.stackexchange.com/questions/13774/how-do-i-detect-the-direction-of-2d-rectangular-object-collisions
@@ -144,6 +82,6 @@ const collidedFromTop = (p, r) => {
 };
 
 export {
-  drawPlayer, drawRectangle, fadeBGColorToDarkBlue, drawDebugPlayer, updatePlayer, sendMovement, handlePlayerCrawl,
+  drawPlayer, drawRectangle, fadeBGColorToDarkBlue, drawDebugPlayer, handlePlayerCrawl,
   collidedFromBottom, collidedFromLeft, collidedFromTop, collidedFromRight
 }

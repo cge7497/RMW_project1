@@ -52,17 +52,22 @@ input{
 
 button{
     font-family: 'Roboto', sans-serif;
-    font-size: 1.5em;
+    font-size: 1.2em;
     font-weight: 700;
-    display:block;
-    background-color:#11ee44;
+    display: block;
     margin: auto;
-    margin-top: 10px;
+    margin-top: 20px;
 }
 
-button:hover{
-    background-color:#0a9e2d;
-    border:3px solid;
+button:enabled{
+    color:black;
+    background-color:#e7e7e7;
+    transition: background-color 250ms linear;
+}
+
+button:enabled:hover{
+    background-color: #cbcee7;
+    border:2px solid;
 }
 
 p{

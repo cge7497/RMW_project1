@@ -14,6 +14,7 @@ const urlStruct = {
     '/bundle.js': htmlHandler.getBundle,
     '/getPlayers': jsonHandler.getPlayers,
     '/getPlayer': jsonHandler.getPlayer,
+    '/getLevel': jsonHandler.getLevel,
     '/getOtherMovement': jsonHandler.getOtherMovement,
     '/favicon.ico': htmlHandler.getFavicon,
     '/screwattack.png': htmlHandler.getScrewAttack,
@@ -24,8 +25,14 @@ const urlStruct = {
     notFound: jsonHandler.notFound,
   },
   HEAD: {
+    //I wasn't sure what the rubric meant regarding supporting HEAD requests, so I just handle both URL possibilities.
+    '/getPlayers': jsonHandler.getPlayersMeta,
+    '/getPlayer': jsonHandler.getPlayerMeta,
+    '/getLevel': jsonHandler.getLevelMeta,
+    '/getOtherMovement': jsonHandler.getOtherMovementMeta,
     '/getPlayersMeta': jsonHandler.getPlayersMeta,
     '/getPlayerMeta': jsonHandler.getPlayerMeta,
+    '/getLevelMeta': jsonHandler.getLevelMeta,
     '/getOtherMovementMeta': jsonHandler.getOtherMovementMeta,
     notFound: jsonHandler.notFound,
   },
@@ -33,6 +40,7 @@ const urlStruct = {
     '/addPlayer': jsonHandler.addPlayer,
     '/addMovement': jsonHandler.addMovement,
     '/updateItems': jsonHandler.updateItems,
+    '/addCloud': jsonHandler.addCloud,
     notFound: jsonHandler.notFound
   },
 };

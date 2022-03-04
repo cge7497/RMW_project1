@@ -1,3 +1,5 @@
+const level = require('./levelData.js');
+
 const players = {};
 let playerMovementThisSecond = {};
 let movementResponses = [];
@@ -9,7 +11,12 @@ const sendMovement = () => {
     //don't return this player's movement...
     respondJSON(m.request, m.response, 200, responseJSON);
   });
-  movementResponses = []; playerMovementThisSecond = [];
+  movementResponses = []; 
+  Object.keys(playerMovementThisSecond).forEach((p) =>{
+    if (p.length && p.length > 60){
+      p.splice(0, p.length -31);
+    }
+  });
 }
 
 const interval = setInterval(sendMovement, 1000, 20);
@@ -68,13 +75,10 @@ const addPlayer = (request, response, body) => {
   players[body.name].color = body.color;
 
   responseJSON = {
-    player: players[body.name],
+    player: players[body.name]
   };
 
-  if (responseCode === 201) {
-    return respondJSON(request, response, responseCode, responseJSON);
-  }
-  // This returns if the player already existed.
+  // This returns both if the player already existed and if they were created.
   return respondJSON(request, response, responseCode, responseJSON)
 };
 
@@ -155,9 +159,37 @@ const updateItems = (request, response, body) => {
   return respondJSONMeta(request, response, 204);
 };
 
+// update the items of a player
+const addCloud = (request, response, body) => {
+  const responseJSON = {
+    message: 'A color is required.',
+  };
+
+  if (!body.color) {
+    responseJSON.id = 'missingParam';
+    return respondJSON(request, response, 400, responseJSON);
+  }
+
+  level.addCloud(body.color);
+
+  // This returns if the cloud was added.
+  return respondJSONMeta(request, response, 204);
+};
+
 const getOtherMovement = (request, response) => {
   movementResponses.push({ request: request, response: response }); //I do this so I can make the server send all movement at the same time/when they should be updated.
 };
+
+const getLevel = (request, response) => {
+  const responseJSON = {
+    level: level.data,
+  }
+  return respondJSON(request, response, 200, responseJSON);
+}
+
+const getLevelMeta = (request, response) => {
+  return respondJSONMeta(request, response, 200);
+}
 
 // Responds with status code 304 (Not Modified)
 // if there has been 1 or less player movement stats in the last second,
@@ -190,10 +222,11 @@ const notFound = (request, response) => {
 module.exports = {
   getPlayers, getPlayersMeta,
   getPlayer, getPlayerMeta,
+  getLevel, getLevelMeta,
+  getOtherMovement, getOtherMovementMeta,
   addPlayer,
-  notFound,
   addMovement,
   updateItems,
-  getOtherMovement,
-  getOtherMovementMeta,
+  addCloud,
+  notFound,
 };

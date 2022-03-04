@@ -1,5 +1,6 @@
 import * as utilities from "./utilities.js";
 import * as classes from "./classes.js"
+import * as requests from './requests.js';
 
 /*
 Todo list: Figure out movement transferring.
@@ -26,11 +27,11 @@ const items = {
     'yellowswitch': { collected: endGame }
 };
 
-const player = { x: 300, y: 300, halfWidth: 4, halfHeight: 7, newX: 300, newY: 300, scale: 1, name: '' };
+const player = { x: 300, y: 300, halfWidth: 4, halfHeight: 7, newX: 300, newY: 300, scale: 1, name: '', flip: false };
 let trueColor = 0, bgRectColor = 0;
 
 let xSpeed = 2, ySpeed = 3;
-let flipPlayer = false; let canFlip = true; let infiniteFlip = false, inEndGame = false;
+let canFlip = true; let infiniteFlip = false, inEndGame = false;
 let canCrawl = false; const crawlTimerMax = 30; let hasMorphBall = false; let crawlInputTimer = 0;
 let keysPressed = [];
 let canvasWidth, canvasHeight;
@@ -65,8 +66,8 @@ const init = (obj, name) => {
     let p_canvas = document.querySelector("#canvas_player");
     let w_canvas = document.querySelector("#canvas_walkers");
     let bg_canvas = document.querySelector("#canvas_bg");
-    //let resetBtn = document.querySelector("#btn_reset");
-    //resetBtn.onclick = function () { location.reload() };
+    document.getElementById('resetBtn').onclick = movePlayerBackToStart;
+
     w_ctx = w_canvas.getContext('2d');
     p_ctx = p_canvas.getContext('2d');
     bg_ctx = bg_canvas.getContext('2d');
@@ -96,7 +97,7 @@ const init = (obj, name) => {
 const update = () => {
     if (!inEndGame) {
         updatePlayer();
-        utilities.drawPlayer(player.x + camXOffset, player.y + camYOffset, p_ctx, flipPlayer, player.scale);
+        utilities.drawPlayer(player.x + camXOffset, player.y + camYOffset, p_ctx, player.flip, player.scale);
         //utilities.drawDebugPlayer(player, p_ctx, camXOffset, camYOffset);
     }
     else endGame();
@@ -109,13 +110,13 @@ const updatePlayer = () => {
     if (keysPressed[68]) xDif = xSpeed;
     //else if (crawlInc<crawlIncMax) 
 
-    if (flipPlayer) yDif = -ySpeed;
+    if (player.flip) yDif = -ySpeed;
     else yDif = ySpeed;
 
     //If the player hasn't crawled recently (so we don;t get a duplicate input)
     if (canCrawl) {
         if (keysPressed[87]) {
-            camYOffset -= utilities.handlePlayerCrawl(player, flipPlayer); //make sure the camera stays centered on player despite edits to their y coordinates caused by crawling.
+            camYOffset -= utilities.handlePlayerCrawl(player, player.flip); //make sure the camera stays centered on player despite edits to their y coordinates caused by crawling.
             canCrawl = false;
             crawlInputTimer = crawlTimerMax;
             xDif = 0; yDif = 0;//making the player not move horizontally when changing to/from ball prevents some collision errors.
@@ -184,8 +185,8 @@ const drawBG = () => {
 
 const sendMovementRequest = async () => {
     if (movementThisSecond && !inEndGame) {
-        otherPlayerMovement = await utilities.sendMovement(movementThisSecond);
-        movementThisSecond.movement=[];
+        otherPlayerMovement = await requests.sendMovement(movementThisSecond);
+        movementThisSecond.movement = [];
         otherPlayerMovementFrame = 0;
         playerMovementFrame = 0;
     }
@@ -195,7 +196,7 @@ const drawOtherPlayerMovement = () => {
     if (inEndGame) return;
 
     //store this player's coordinate
-    movementThisSecond.movement.push({ x: player.x, y: player.y, flipped: flipPlayer });
+    movementThisSecond.movement.push({ x: player.x, y: player.y, flipped: player.flip });
 
     playerMovementFrame += 1;
     let keys;
@@ -205,7 +206,7 @@ const drawOtherPlayerMovement = () => {
         keys = Object.keys(otherPlayerMovement.movement);
     }
     else return;
-    keys.splice(keys.indexOf(player.name), 1);
+    keys.splice(keys.indexOf(player.name), 1); //remove this player's movement from the array, so it is not needlessly drawin them.
     if (keys.length < 1) return;
 
     w_ctx.clearRect(0, 0, 640, 480);
@@ -219,6 +220,8 @@ const drawOtherPlayerMovement = () => {
 //Returns true if there are collisions. It also fixes these collisions.
 const CollisionsWithLevel = (p, xDif, yDif) => {
     let colliding = false;
+    let tempX = p.x, tempY = p.y;
+    const tempPlayer = {x: p.x, y: p.y, newX: p.x, newY: p.newY, halfWidth:p.halfWidth, halfHeight: p.halfHeight};
     classes.rects.forEach((r) => {
         if (p.newX - p.halfWidth < r.x + r.width && p.newX + (p.halfWidth) > r.x
             && p.newY - p.halfHeight < r.y + r.height && p.newY + p.halfHeight > r.y) {
@@ -234,6 +237,10 @@ const CollisionsWithLevel = (p, xDif, yDif) => {
     });
     return colliding;
 };
+const areColliding = (p, r) => {
+     return (p.newX - p.halfWidth < r.x + r.width && p.newX + p.halfWidth > r.x
+            && p.newY - p.halfHeight < r.y + r.height && p.newY + p.halfHeight > r.y);
+}
 
 const CollisionsWithSpecialObjects = (p) => {
     classes.specialObjects.forEach((o) => {
@@ -246,7 +253,8 @@ const CollisionsWithSpecialObjects = (p) => {
     })
 };
 
-function initItems(items) {
+//If the player's data on the server shows they already have items, give them those items.
+const initItems = (items) => {
     if (items['morphball']) {
         collectMorphBall(false);
     }
@@ -255,13 +263,13 @@ function initItems(items) {
     }
 }
 
-//I made these functions so they can be accessed in the items object declaration (as they are referenced before defined).
+//I made these 'functions' so they can be accessed in the items object declaration (as they are referenced before defined).
 function collectMorphBall(shouldSendPost = true) {
     document.getElementById('morphball').style.display = 'inline';
     document.getElementById('moveInstructions').innerHTML = `Use '<strong>A</strong>', '<strong>D</strong>', and '<strong>W</strong>' to move, `;
     canCrawl = true; hasMorphBall = true;
     if (shouldSendPost === true) {
-        utilities.updatePlayer(player.name, 'morphball');
+        requests.updatePlayer(player.name, 'morphball');
         item_audio.play();
     }
 }
@@ -271,12 +279,18 @@ function collectScrewAttack(shouldSendPost = true) {
     document.getElementById('spaceInstructions').innerHTML = `<strong>SPACE</strong> to ultra flip`
     infiniteFlip = true;
     if (shouldSendPost === true) {
-        utilities.updatePlayer(player.name, 'screwattack');
+        requests.updatePlayer(player.name, 'screwattack');
         item_audio.play();
     }
 }
 
-// Runs every update once the player has clicked the yellow button.
+const movePlayerBackToStart = () => {
+    player.x = 300; player.y = 300; player.flip = false;
+    player.newX = 300; player.newY = 300;
+    camXOffset = 0; camYOffset = 0;
+}
+
+// Runs every update (60 fps) once the player has clicked the yellow button.
 function endGame() {
     if (!inEndGame) {
         //create a background rectangle of the player's selected color.
@@ -284,8 +298,11 @@ function endGame() {
         btn_audio.play();
         inEndGame = true;
     }
-    if (bgRectColor < 254) bgRectColor += 0.2;
-    utilities.drawPlayer(player.x + camXOffset, player.y + camYOffset, p_ctx, flipPlayer, player.scale, `#000000${(255 - bgRectColor).toString(16).substring(0, 2)}`);
+    if (bgRectColor < 254) {
+        bgRectColor += 0.2; player.y += 0.5;
+    }
+
+    utilities.drawPlayer(player.x + camXOffset, player.y + camYOffset, p_ctx, player.flip, player.scale, `#000000${(255 - bgRectColor).toString(16).substring(0, 2)}`);
 
     bgRects.forEach((r) => {
         if (bgRects.indexOf(r) != bgRects.length - 1) {
@@ -326,7 +343,7 @@ const keyDown = (e) => {
             //Only flip the player if space was not pressed the previous frame, and the player can flip based on landing on grounds/items.
             if (!keysPressed[e.keyCode]) {
                 if (canFlip || infiniteFlip) {
-                    flipPlayer = !flipPlayer;
+                    player.flip = !player.flip;
                     canFlip = false;
                 }
             }
