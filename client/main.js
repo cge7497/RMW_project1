@@ -116,7 +116,9 @@ const updatePlayer = () => {
     //If the player hasn't crawled recently (so we don;t get a duplicate input)
     if (canCrawl) {
         if (keysPressed[87]) {
-            camYOffset -= utilities.handlePlayerCrawl(player, player.flip); //make sure the camera stays centered on player despite edits to their y coordinates caused by crawling.
+            //make sure the camera stays centered on player despite edits to their y coordinates caused by crawling.
+            camYOffset -= utilities.handlePlayerCrawl(player, player.flip); 
+            
             canCrawl = false;
             crawlInputTimer = crawlTimerMax;
             xDif = 0; yDif = 0;//making the player not move horizontally when changing to/from ball prevents some collision errors.

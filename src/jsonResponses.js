@@ -2,7 +2,7 @@ const level = require('./levelData.js');
 
 const players = {};
 const playerMovementThisSecond = {};
-let movementResponses = [];
+const movementResponses = [];
 
 // writes a status header and a JSON object to the response.
 const respondJSON = (request, response, status, object) => {
@@ -113,11 +113,15 @@ const addMovement = (request, response, body) => {
     return respondJSON(request, response, 400, responseJSON);
   }
 
-  responseJSON = {movement: playerMovementThisSecond};
+  responseJSON = { movement: playerMovementThisSecond };
   respondJSON(request, response, 200, responseJSON);
 
-  playerMovementThisSecond[movement.name] = { name: movement.name, color: movement.color, movement: movement.movement };
-  
+  playerMovementThisSecond[movement.name] = {
+    name: movement.name,
+    color: movement.color,
+    movement: movement.movement,
+  };
+
   return 0;
 };
 
@@ -163,7 +167,7 @@ const addCloud = (request, response, body) => {
 };
 
 const getMovement = (request, response) => {
-  const responseJSON = {movement: playerMovementThisSecond};
+  const responseJSON = { movement: playerMovementThisSecond };
   respondJSON(request, response, 200, responseJSON);
 };
 

@@ -84,7 +84,6 @@ const onRequest = (request, response) => {
     }
   }
 
-
   if (urlStruct[method][parsedUrl.pathname]) {
     return urlStruct[method][parsedUrl.pathname](request, response, queryParams);
   }
