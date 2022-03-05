@@ -91,6 +91,7 @@ const init = (obj, name) => {
     setInterval(update, 1000 / 60);
     setInterval(drawBG, 1000 / 15);
     setInterval(sendMovementRequest, 1000);
+    setInterval(drawOtherPlayerMovement, 1000/30);
 }
 
 const update = () => {
@@ -185,18 +186,9 @@ const drawBG = () => {
 const sendMovementRequest = async () => {
     if (movementThisSecond && !inEndGame) {
         otherPlayerMovement = await requests.sendMovement(movementThisSecond);
+        otherPlayerMovementFrame=0;
+        movementThisSecond.movement = [];
         playerMovementFrame = 0;
-        if (!shouldDrawOthers) {
-            //Some truly beautiful Javascript.
-            setInterval(() => {
-                setTimeout(() => {
-                    drawOtherPlayerMovement();
-                    movementThisSecond.movement = [];
-                    otherPlayerMovementFrame = 0;
-                }, 500);
-            }, 1000 / 30);
-            shouldDrawOthers = true;
-        }
     }
 };
 
@@ -218,7 +210,6 @@ const drawOtherPlayerMovement = () => {
     if (keys.length < 1) return;
 
     w_ctx.clearRect(0, 0, 640, 480);
-    console.log(otherPlayerMovementFrame);
     keys.forEach((m) => {
         const f = otherPlayerMovement.movement[m].movement[otherPlayerMovementFrame];
         if (f) utilities.drawPlayer(f.x + camXOffset, f.y + camYOffset, w_ctx, f.flipped, 1, `${otherPlayerMovement.movement[m].color}55`, false);

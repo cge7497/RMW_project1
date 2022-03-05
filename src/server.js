@@ -15,7 +15,7 @@ const urlStruct = {
     '/getPlayers': jsonHandler.getPlayers,
     '/getPlayer': jsonHandler.getPlayer,
     '/getLevel': jsonHandler.getLevel,
-    '/getOtherMovement': jsonHandler.getOtherMovement,
+    '/getMovement': jsonHandler.getMovement,
     '/favicon.ico': htmlHandler.getFavicon,
     '/screwattack.png': htmlHandler.getScrewAttack,
     '/morphball.png': htmlHandler.getMorphBall,
@@ -30,11 +30,11 @@ const urlStruct = {
     '/getPlayers': jsonHandler.getPlayersMeta,
     '/getPlayer': jsonHandler.getPlayerMeta,
     '/getLevel': jsonHandler.getLevelMeta,
-    '/getOtherMovement': jsonHandler.getOtherMovementMeta,
+    '/getMovement': jsonHandler.getMovementMeta,
     '/getPlayersMeta': jsonHandler.getPlayersMeta,
     '/getPlayerMeta': jsonHandler.getPlayerMeta,
     '/getLevelMeta': jsonHandler.getLevelMeta,
-    '/getOtherMovementMeta': jsonHandler.getOtherMovementMeta,
+    '/getMovementMeta': jsonHandler.getMovementMeta,
     notFound: jsonHandler.notFound,
   },
   POST: {
@@ -78,7 +78,12 @@ const onRequest = (request, response) => {
   let { method } = request;
   if (!request.method) method = 'GET'; // defaults to a GET method as described in assignment
 
-  if (method === 'POST') { return parseBody(request, response, urlStruct[method][parsedUrl.pathname]); }
+  if (method === 'POST') {
+    if (urlStruct[method][parsedUrl.pathname]) {
+      return parseBody(request, response, urlStruct[method][parsedUrl.pathname]);
+    }
+  }
+
 
   if (urlStruct[method][parsedUrl.pathname]) {
     return urlStruct[method][parsedUrl.pathname](request, response, queryParams);

@@ -17,23 +17,6 @@ const respondJSONMeta = (request, response, status) => {
   response.end();
 };
 
-const sendMovement = () => {
-  const responseJSON = { movement: playerMovementThisSecond };
-  movementResponses.forEach((m) => {
-    // playerMovementThisSecond[m.name];
-    // don't return this player's movement...
-    respondJSON(m.request, m.response, 200, responseJSON);
-  });
-  movementResponses = [];
-  Object.keys(playerMovementThisSecond).forEach((p) => {
-    if (p.length && p.length > 60) {
-      p.slice(p.length-31);
-    }
-  });
-};
-
-setInterval(sendMovement, 1000);
-
 // return user object as JSON
 const getPlayers = (request, response) => {
   const responseJSON = {
@@ -111,7 +94,7 @@ const getPlayer = (request, response, body) => {
 
 // adds to the global movement array for this second.
 const addMovement = (request, response, body) => {
-  const responseJSON = {
+  let responseJSON = {
     message: 'This endpoint requires a player JSON object with a name, color, and array of >=30 JSON objects with an X, Y, and flipped variable. They were not present in the request.',
     id: 'missingParams',
   };
@@ -130,11 +113,11 @@ const addMovement = (request, response, body) => {
     return respondJSON(request, response, 400, responseJSON);
   }
 
-  const { name } = movement;
-  // I do this so I can make the server send all movement at the same time/after it's been updated
-  movementResponses.push({ request, response });
-  playerMovementThisSecond[name] = { name, color: movement.color, movement: movement.movement };
+  responseJSON = {movement: playerMovementThisSecond};
+  respondJSON(request, response, 200, responseJSON);
 
+  playerMovementThisSecond[movement.name] = { name: movement.name, color: movement.color, movement: movement.movement };
+  
   return 0;
 };
 
@@ -179,9 +162,9 @@ const addCloud = (request, response, body) => {
   return respondJSONMeta(request, response, 204);
 };
 
-const getOtherMovement = (request, response) => {
-  // I do this so I can make the server send all movement at the same time/after it's been updated
-  movementResponses.push({ request, response });
+const getMovement = (request, response) => {
+  const responseJSON = {movement: playerMovementThisSecond};
+  respondJSON(request, response, 200, responseJSON);
 };
 
 const getLevel = (request, response) => {
@@ -197,7 +180,7 @@ const getLevelMeta = (request, response) => respondJSONMeta(request, response, 2
 // if there has been 1 or less player movement stats in the last second,
 // or status 100 (Continue) if there was other player movement recently.
 // Currently not used by client...
-const getOtherMovementMeta = (request, response) => {
+const getMovementMeta = (request, response) => {
   if (movementResponses.length === 0) {
     respondJSONMeta(request, response, 304);
   } else respondJSONMeta(request, response, 100);
@@ -224,8 +207,8 @@ module.exports = {
   getPlayerMeta,
   getLevel,
   getLevelMeta,
-  getOtherMovement,
-  getOtherMovementMeta,
+  getMovement,
+  getMovementMeta,
   addPlayer,
   addMovement,
   updateItems,
