@@ -187,9 +187,12 @@ const getLevelMeta = (request, response) => respondJSONMeta(request, response, 2
 
 // Currently not used by client, but could work to prevent unnecessary sendMovement POST requests.
 const getMovementMeta = (request, response) => {
-  if (Object.keys(playerMovementThisSecond).length) {
-    respondJSONMeta(request, response, 304);
-  } else respondJSONMeta(request, response, 100);
+  /*const keys = Object.keys(playerMovementThisSecond);
+  if (keys && keys.length > 0) {
+    return respondJSONMeta(request, response, 304);
+  } else return respondJSONMeta(request, response, 100);
+ */
+  respondJSONMeta(request, response, 200);
 };
 
 const getPlayerMeta = (request, response) => respondJSONMeta(request, response, 200);
