@@ -2,7 +2,6 @@ const level = require('./levelData.js');
 
 const players = {};
 const playerMovementThisSecond = {};
-const movementResponses = [];
 
 // writes a status header and a JSON object to the response.
 const respondJSON = (request, response, status, object) => {
@@ -149,7 +148,7 @@ const updateItems = (request, response, body) => {
   return respondJSONMeta(request, response, 204);
 };
 
-// update the items of a player
+// Add a cloud to the level data JSON object.
 const addCloud = (request, response, body) => {
   const responseJSON = {
     message: 'A color is required.',
@@ -166,11 +165,13 @@ const addCloud = (request, response, body) => {
   return respondJSONMeta(request, response, 204);
 };
 
+// returns global player movement. Currently not used by front-end, but helpful for testing.
 const getMovement = (request, response) => {
   const responseJSON = { movement: playerMovementThisSecond };
   respondJSON(request, response, 200, responseJSON);
 };
 
+// Returns the level data.
 const getLevel = (request, response) => {
   const responseJSON = {
     level: level.data,
@@ -183,9 +184,10 @@ const getLevelMeta = (request, response) => respondJSONMeta(request, response, 2
 // Responds with status code 304 (Not Modified)
 // if there has been 1 or less player movement stats in the last second,
 // or status 100 (Continue) if there was other player movement recently.
-// Currently not used by client...
+
+// Currently not used by client, but could work to prevent unnecessary sendMovement POST requests.
 const getMovementMeta = (request, response) => {
-  if (movementResponses.length === 0) {
+  if (Object.keys(playerMovementThisSecond).length) {
     respondJSONMeta(request, response, 304);
   } else respondJSONMeta(request, response, 100);
 };

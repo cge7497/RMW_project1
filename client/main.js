@@ -1,26 +1,20 @@
 import * as utilities from "./utilities.js";
-import * as classes from "./classes.js"
+import * as level from "./level.js"
 import * as requests from './requests.js';
 
-/*
-Todo list: Figure out movement transferring.
-Delete unused code from it.
-Also need function with GET parameters.
-
-Make sure stuff fits to rubric. Cloud ending, button that changes the color of blocks in the world. That'll be a big function for the server.
-*/
 let w_ctx, p_ctx, bg_ctx;
 const sq_walkers = [], arc_walkers = [];
 const bgRects = [];
 let movementThisSecond = {}; let otherPlayerMovement = {};
-let updateMovement = true, otherPlayerMovementFrame = 0, playerMovementFrame = 0, shouldDrawOthers = false;
+let updateMovement = true, otherPlayerMovementFrame = 0, shouldDrawOthers = false;
 
+// Stores images that are used as sprites.
 const imgs = {
     'screwattack': document.getElementById('screwattack'),
     'morphball': document.getElementById('morphball'),
     'yellowswitch': document.getElementById('yellowswitch'),
 };
-
+// Stores items that the player holds and their relevant properties.
 const items = {
     'screwattack': { obtained: false, collected: collectScrewAttack },
     'morphball': { obtained: false, collected: collectMorphBall },
@@ -43,7 +37,8 @@ const WIDTH = 5;
 const BG_DIR_MULTIPLIER = 1;
 let camXOffset = 0, camYOffset = 0
 
-//I created the sounds with SFXR (http://sfxr.me/)
+// Initializes the game mainly based on data gotten in level.js getData. 
+// Runs after the player has logged in (called in playerLogin.js)
 const init = (obj, name) => {
     if (obj && obj.player) {
         player.name = obj.player.name;
@@ -58,6 +53,7 @@ const init = (obj, name) => {
     movementThisSecond.color = trueColor;
     movementThisSecond.movement = [];
 
+    //I created these sounds with SFXR (http://sfxr.me/)
     btn_audio = new Audio("buttonClick.wav");
     btn_audio.volume = 0.25;
     item_audio = new Audio("itemGet.wav");
@@ -80,8 +76,15 @@ const init = (obj, name) => {
 
     utilities.drawPlayer(300, 300, p_ctx, false);
 
+    //If getLevel (in level.js) got back a set of clouds, add them to the bgRects/clouds that will be displayed by the client.
+    if (level.clouds && level.clouds.length>0){
+        level.clouds.forEach((c) => {
+            bgRects.push(new level.bgRect(Math.random() * 630 + 5, Math.random() * 470 + 5, Math.random() * 10 + 30, Math.random() * 4 + 3, c));
+        })
+    }
+
     for (let i = 0; i < 10; i++) {
-        bgRects.push(new classes.bgRect(Math.random() * 640, Math.random() * 480, Math.random() * 10 + 30, Math.random() * 4 + 3, "rgba(0,0,0,0.3)"));
+        bgRects.push(new level.bgRect(Math.random() * 640, Math.random() * 480, Math.random() * 10 + 30, Math.random() * 4 + 3, "rgba(0,0,0,0.3)"));
     }
     drawBG();
 
@@ -90,10 +93,10 @@ const init = (obj, name) => {
 
     setInterval(update, 1000 / 60);
     setInterval(drawBG, 1000 / 15);
-    setInterval(sendMovementRequest, 1000);
+    setInterval(sendAndReceiveMovement, 1000);
     setInterval(drawOtherPlayerMovement, 1000/30);
 }
-
+//Runs 60 frames per second. Serves to update game state and draw.
 const update = () => {
     if (!inEndGame) {
         updatePlayer();
@@ -104,6 +107,7 @@ const update = () => {
     drawLevel();
 }
 
+// Updates player movement based on input and collision.
 const updatePlayer = () => {
     let xDif = 0, yDif = 0;
     if (keysPressed[65]) xDif = -xSpeed;
@@ -118,7 +122,7 @@ const updatePlayer = () => {
         if (keysPressed[87]) {
             //make sure the camera stays centered on player despite edits to their y coordinates caused by crawling.
             camYOffset -= utilities.handlePlayerCrawl(player, player.flip); 
-            
+
             canCrawl = false;
             crawlInputTimer = crawlTimerMax;
             xDif = 0; yDif = 0;//making the player not move horizontally when changing to/from ball prevents some collision errors.
@@ -147,16 +151,17 @@ const updatePlayer = () => {
     CollisionsWithSpecialObjects(player);
 }
 
+//Draws the level (composed of rectangles and special objects) onto the player canvas.
 const drawLevel = () => {
-    classes.rects.forEach((r) => {
+    level.rects.forEach((r) => {
         utilities.drawRectangle(r.x + camXOffset, r.y + camYOffset, r.width, r.height, p_ctx, r.color, true);
     });
-    classes.specialObjects.forEach((o) => {
+    level.specialObjects.forEach((o) => {
         p_ctx.drawImage(imgs[o.id], o.x + camXOffset, o.y + camYOffset);
     });
 };
 
-
+//Draws background clouds onto the background canvas.
 const drawBG = () => {
     bg_ctx.clearRect(0, 0, 640, 480);
     if (should_change_bg_color) {
@@ -185,22 +190,21 @@ const drawBG = () => {
     )
 };
 
-const sendMovementRequest = async () => {
+// Sends the player's movement in the last second.
+const sendAndReceiveMovement = async () => {
     if (movementThisSecond && !inEndGame) {
         otherPlayerMovement = await requests.sendMovement(movementThisSecond);
         otherPlayerMovementFrame=0;
         movementThisSecond.movement = [];
-        playerMovementFrame = 0;
     }
 };
-
+// Draws the movement of other players onto the walkers canvas, which is above the bg and behind the player.
 const drawOtherPlayerMovement = () => {
     if (inEndGame) return;
 
     //store this player's coordinate
-    movementThisSecond.movement.push({ x: player.x, y: player.y, flipped: player.flip });
+    movementThisSecond.movement.push({ x: player.x + player.halfWidth, y: player.y + player.halfHeight, flipped: player.flip });
 
-    playerMovementFrame += 1;
     let keys;
     if (otherPlayerMovement.movement) {
         // I got this Object.keys() function from https://stackoverflow.com/questions/37673454/javascript-iterate-key-value-from-json
@@ -222,7 +226,7 @@ const drawOtherPlayerMovement = () => {
 //Returns true if there are collisions. It also fixes these collisions.
 const CollisionsWithLevel = (p, xDif, yDif) => {
     let colliding = false;
-    classes.rects.forEach((r) => {
+    level.rects.forEach((r) => {
         if (areColliding(p, r)) {
             colliding = true;
             if (utilities.collidedFromBottom(p, r) || utilities.collidedFromTop(p, r)) {
@@ -236,18 +240,18 @@ const CollisionsWithLevel = (p, xDif, yDif) => {
     });
     return colliding;
 };
+//Checks if two objects are colliding. (Only used by the player and rectangles/special objects currently.)
 const areColliding = (p, r) => {
     return (p.newX - p.halfWidth < r.x + r.width && p.newX + p.halfWidth > r.x
         && p.newY - p.halfHeight < r.y + r.height && p.newY + p.halfHeight > r.y);
 }
 
 const CollisionsWithSpecialObjects = (p) => {
-    classes.specialObjects.forEach((o) => {
-        if (p.newX - p.halfWidth < o.x + o.width && p.newX + (p.halfWidth) > o.x
-            && p.newY - p.halfHeight < o.y + o.height && p.newY + p.halfHeight > o.y) {
+    level.specialObjects.forEach((o) => {
+        if (areColliding(p,o)) {
             //should give player this item... maybe it has an index, or a callback function
             items[o.id].collected();
-            classes.specialObjects.splice(classes.specialObjects.indexOf(o), 1);
+            level.specialObjects.splice(level.specialObjects.indexOf(o), 1);
         }
     })
 };
@@ -262,7 +266,9 @@ const initItems = (items) => {
     }
 }
 
-//I made these 'functions' so they can be accessed in the items object declaration (as they are referenced before defined).
+// I made these 'functions' so they can be accessed in the items object declaration (as they are referenced before defined).
+// They handle giving the player the relevant item. They displays the relevant image next to items, updates instruction text,
+// and may send a POST request to the server updating this player's items.
 function collectMorphBall(shouldSendPost = true) {
     document.getElementById('morphball').style.display = 'inline';
     document.getElementById('moveInstructions').innerHTML = `Use '<strong>A</strong>', '<strong>D</strong>', and '<strong>W</strong>' to move, `;
@@ -272,7 +278,6 @@ function collectMorphBall(shouldSendPost = true) {
         item_audio.play();
     }
 }
-
 function collectScrewAttack(shouldSendPost = true) {
     document.getElementById('screwattack').style.display = 'inline';
     document.getElementById('spaceInstructions').innerHTML = `<strong>SPACE</strong> to ultra flip`
@@ -283,6 +288,7 @@ function collectScrewAttack(shouldSendPost = true) {
     }
 }
 
+// Ran when the 'Back To Start' button is clicked. Useful if the player shoots off into the distance without the screw attack.
 const movePlayerBackToStart = () => {
     player.x = 300; player.y = 300; player.flip = false;
     player.newX = 300; player.newY = 300;
@@ -290,10 +296,12 @@ const movePlayerBackToStart = () => {
 }
 
 // Runs every update (60 fps) once the player has clicked the yellow button.
+// Displays some cool graphics/effects.
 function endGame() {
     if (!inEndGame) {
         //create a background rectangle of the player's selected color.
-        bgRects.push(new classes.bgRect(Math.random() * 640, Math.random() * 480, Math.random() * 10 + 30, Math.random() * 4 + 3, trueColor));
+        bgRects.push(new level.bgRect(Math.random() * 640, Math.random() * 480, Math.random() * 10 + 30, Math.random() * 4 + 3, trueColor));
+        requests.sendCloud(trueColor);
         btn_audio.play();
         inEndGame = true;
     }
@@ -312,7 +320,7 @@ function endGame() {
             r.color = `${trueColor}${bgRectColor.toString(16).substring(0, 2)}`;
         }
     });
-    classes.rects.forEach((r) => {
+    level.rects.forEach((r) => {
         r.color = `rgba(${bgRectColor}, ${bgRectColor}, ${bgRectColor}, 0.5)`;
     });
 }

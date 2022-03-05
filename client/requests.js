@@ -61,6 +61,19 @@ const sendMovement = async (movement) => {
     return obj;
 };
 
+const sendCloud = async (color = '#000000') => {
+    //Build a data string in the FORM-URLENCODED format.
+    const formData = `color=${color}`;
+
+    let response = await fetch('/addCloud', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'Accept': 'application/json',
+        },
+        body: formData,
+    });
+}
 export {
-    updatePlayer, sendMovement
+    updatePlayer, sendMovement, sendCloud
   }

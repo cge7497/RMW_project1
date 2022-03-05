@@ -1,5 +1,5 @@
 import * as main from './main.js';
-import * as classes from './classes.js';
+import * as level from './level.js';
 
 //I got this code from class assignments. In particular https://github.com/IGM-RichMedia-at-RIT/body-parse-example-done/blob/master/client/client.html
 const handleResponse = async (response, name) => {
@@ -63,7 +63,7 @@ const sendPlayer = async (nameForm) => {
 
 //Hooks up the form submission button to the sendPost function.
 const init = () => {
-    classes.getData(); //get the level data before the player loads, so that it is ready.
+    level.getData(); //get the level data before the player loads, so that it is ready.
     
     const playerForm = document.querySelector('#playerForm');
 

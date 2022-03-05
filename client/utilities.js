@@ -1,4 +1,4 @@
-//draws the player shape, which is a combination of canvas lines and arcs.
+// draws the player shape, which is a combination of canvas lines and arcs.
 const drawPlayer = (x, y, p_ctx, flipPlayer, scale, color, shouldClear = true) => {
   if (flipPlayer) scale *= -1;
   if (shouldClear) p_ctx.clearRect(0, 0, 640, 480);
@@ -46,7 +46,7 @@ const handlePlayerCrawl = (p, flip) => {
   return totalDif;
 }
 
-
+//not used.
 const fadeBGColorToDarkBlue = (color_rgb) => {
   if (color_rgb[0] > 15) color_rgb[0] -= 0.1;
   if (color_rgb[1] > 31) color_rgb[1] -= 0.1;

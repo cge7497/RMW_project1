@@ -28,7 +28,7 @@ const getData = async () => {
   }
 
   if (obj.level.clouds && obj.level.clouds.length > 0) {
-    clouds = clouds;
+    clouds = [...obj.level.clouds];
   }
 
 }

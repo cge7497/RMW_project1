@@ -1,3 +1,5 @@
+// Stores the data of the level.
+// I could swap it out on the server, and the player will get the new one upon refresh.
 const data = {
   rects: [
     // Main middle room
