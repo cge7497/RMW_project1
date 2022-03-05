@@ -10,7 +10,7 @@ class bgRect {
   }
 }
 
-let rects = [], specialObjects = [];
+let rects = [], specialObjects = [], clouds = [];
 
 const getData = async () => {
   let response = await fetch('/getLevel', {
@@ -28,8 +28,9 @@ const getData = async () => {
   }
 
   if (obj.level.clouds && obj.level.clouds.length > 0) {
-
+    clouds = clouds;
   }
+
 }
 
-export { bgRect, rects, specialObjects, getData };
+export { bgRect, rects, specialObjects, clouds, getData };

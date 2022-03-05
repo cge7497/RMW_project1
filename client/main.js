@@ -12,8 +12,8 @@ Make sure stuff fits to rubric. Cloud ending, button that changes the color of b
 let w_ctx, p_ctx, bg_ctx;
 const sq_walkers = [], arc_walkers = [];
 const bgRects = [];
-const movementThisSecond = {}; let otherPlayerMovement = {};
-let updateMovement = true, otherPlayerMovementFrame = 0, playerMovementFrame = 0;
+let movementThisSecond = {}; let otherPlayerMovement = {};
+let updateMovement = true, otherPlayerMovementFrame = 0, playerMovementFrame = 0, shouldDrawOthers = false;
 
 const imgs = {
     'screwattack': document.getElementById('screwattack'),
@@ -91,7 +91,6 @@ const init = (obj, name) => {
     setInterval(update, 1000 / 60);
     setInterval(drawBG, 1000 / 15);
     setInterval(sendMovementRequest, 1000);
-    setInterval(drawOtherPlayerMovement, 1000 / 30);
 }
 
 const update = () => {
@@ -186,9 +185,18 @@ const drawBG = () => {
 const sendMovementRequest = async () => {
     if (movementThisSecond && !inEndGame) {
         otherPlayerMovement = await requests.sendMovement(movementThisSecond);
-        movementThisSecond.movement = [];
-        otherPlayerMovementFrame = 0;
         playerMovementFrame = 0;
+        if (!shouldDrawOthers) {
+            //Some truly beautiful Javascript.
+            setInterval(() => {
+                setTimeout(() => {
+                    drawOtherPlayerMovement();
+                    movementThisSecond.movement = [];
+                    otherPlayerMovementFrame = 0;
+                }, 500);
+            }, 1000 / 30);
+            shouldDrawOthers = true;
+        }
     }
 };
 
@@ -210,6 +218,7 @@ const drawOtherPlayerMovement = () => {
     if (keys.length < 1) return;
 
     w_ctx.clearRect(0, 0, 640, 480);
+    console.log(otherPlayerMovementFrame);
     keys.forEach((m) => {
         const f = otherPlayerMovement.movement[m].movement[otherPlayerMovementFrame];
         if (f) utilities.drawPlayer(f.x + camXOffset, f.y + camYOffset, w_ctx, f.flipped, 1, `${otherPlayerMovement.movement[m].color}55`, false);
@@ -220,17 +229,14 @@ const drawOtherPlayerMovement = () => {
 //Returns true if there are collisions. It also fixes these collisions.
 const CollisionsWithLevel = (p, xDif, yDif) => {
     let colliding = false;
-    let tempX = p.x, tempY = p.y;
-    const tempPlayer = {x: p.x, y: p.y, newX: p.x, newY: p.newY, halfWidth:p.halfWidth, halfHeight: p.halfHeight};
     classes.rects.forEach((r) => {
-        if (p.newX - p.halfWidth < r.x + r.width && p.newX + (p.halfWidth) > r.x
-            && p.newY - p.halfHeight < r.y + r.height && p.newY + p.halfHeight > r.y) {
+        if (areColliding(p, r)) {
             colliding = true;
             if (utilities.collidedFromBottom(p, r) || utilities.collidedFromTop(p, r)) {
                 p.newY -= yDif;
                 if (!infiniteFlip) canFlip = true; //If the player doesn't have the screw attack/infinite flip, then continue updating canFlip
             }
-            else if (utilities.collidedFromLeft(p, r) || utilities.collidedFromRight(p, r)) {
+            if (utilities.collidedFromLeft(p, r) || utilities.collidedFromRight(p, r)) {
                 p.newX -= xDif;
             }
         }
@@ -238,8 +244,8 @@ const CollisionsWithLevel = (p, xDif, yDif) => {
     return colliding;
 };
 const areColliding = (p, r) => {
-     return (p.newX - p.halfWidth < r.x + r.width && p.newX + p.halfWidth > r.x
-            && p.newY - p.halfHeight < r.y + r.height && p.newY + p.halfHeight > r.y);
+    return (p.newX - p.halfWidth < r.x + r.width && p.newX + p.halfWidth > r.x
+        && p.newY - p.halfHeight < r.y + r.height && p.newY + p.halfHeight > r.y);
 }
 
 const CollisionsWithSpecialObjects = (p) => {

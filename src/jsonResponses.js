@@ -27,7 +27,7 @@ const sendMovement = () => {
   movementResponses = [];
   Object.keys(playerMovementThisSecond).forEach((p) => {
     if (p.length && p.length > 60) {
-      p.splice(0, p.length - 31);
+      p.slice(p.length-31);
     }
   });
 };
@@ -135,7 +135,7 @@ const addMovement = (request, response, body) => {
   movementResponses.push({ request, response });
   playerMovementThisSecond[name] = { name, color: movement.color, movement: movement.movement };
 
-  return respondJSONMeta(request, response, 204);
+  return 0;
 };
 
 // update the items of a player

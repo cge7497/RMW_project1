@@ -62,23 +62,23 @@ const drawDebugPlayer = (p, p_ctx, xCam, yCam) => {
 // These functions test which direction two objects (usually the player and a rectangle) collided.
 // It compares the player's old coordinates and new ones with the rectangles, to figure out which coordinate change triggered the collision.
 const collidedFromRight = (p, r) => {
-  return (p.x + p.halfWidth) <= r.x && // If the new coordinates were not overlapping...
-    (p.newX + p.halfWidth) >= r.x; // and the new ones are.
+  return (p.x + (p.halfWidth - 2)) <= r.x && // If the new coordinates were not overlapping...
+    (p.newX + (p.halfWidth + 2)) >= r.x; // and the new ones are.
 };
 
 const collidedFromLeft = (p, r) => {
-  return (p.x - p.halfWidth) >= (r.x + r.width) &&
-    (p.newX - p.halfWidth) < (r.x + r.width);
+  return (p.x - (p.halfWidth - 2)) >= (r.x + r.width) &&
+    (p.newX - (p.halfWidth + 2)) < (r.x + r.width);
 };
 
 const collidedFromBottom = (p, r) => {
-  return (p.y + p.halfHeight) < r.y &&
-    (p.newY + p.halfHeight) >= r.y;
+  return (p.y + (p.halfHeight - 2)) < r.y &&
+    (p.newY + (p.halfHeight + 2)) >= r.y;
 };
 
 const collidedFromTop = (p, r) => {
-  return (p.y - p.halfHeight) >= (r.y + r.height) && // was not colliding
-    (p.newY - p.halfHeight) < (r.y + r.height);
+  return (p.y - (p.halfHeight - 2)) >= (r.y + r.height) && // was not colliding
+    (p.newY - (p.halfHeight + 2)) < (r.y + r.height);
 };
 
 export {

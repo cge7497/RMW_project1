@@ -51,7 +51,6 @@ const sendMovement = async (movement) => {
 
     switch (response.status) {
         case 200:
-            obj = await response.json();
             break;
         case 204:
             break;
